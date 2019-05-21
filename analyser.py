@@ -1,5 +1,7 @@
 import re
+import sys
 import copy
+import getopt
 from shutil import copyfile
 import collections
 
@@ -39,7 +41,7 @@ class TypeDef(object):
 
     def evalEnum(self):
         enums = re.findall(r'(\w*?)\s*:\s*enum\s*\{(.*?)\}\s*;', self.text, re.S)
-        for name, vstr in enums:
+        for _, vstr in enums:
             values = list(filter(lambda x: x, list(map(lambda y: y.strip(), vstr.split(',')))))
             for v in values:
                 self.enumvalues.add(v)
@@ -202,28 +204,38 @@ class Guard(object):
                 self.mainfield.content.append(g)
 
     def deal_forall(self, text):
-        pattern = re.compile(r'!?forall(.*?)do(.*)end', re.S)
-        params, content = re.findall(pattern, text)[0]
-        temp_field = Field()
+        pattern = re.compile(r'forall(.*?)do(.*)end', re.S)
+        try:
+            params, content = re.findall(pattern, text)[0]
+        except:
+            print('cannot deal with %s ' % text)
+        else:
+            temp_field = Field()
 
-        param_name_dict = analyzeParams(params)
-        temp_field.para_dict = param_name_dict
-        # for var, type in param_name_dict.items():
-        # parts = set(filter(lambda x: x, map(lambda x: re.sub('%s' % var, type, x.strip()),
-        #                 filter(lambda x: len(x) > 2, re.split(r'(\||->|\n|\(|\)|&)', content)))))
-        parts = set(filter(lambda x: x, map(lambda x: x.strip(),
-                                            filter(lambda x: len(x) > 2,
-                                                   re.split(r'(\||->|\n|\(|\)|&)', content)))))
+            param_name_dict = analyzeParams(params)
+            temp_field.para_dict = param_name_dict
+            # for var, type in param_name_dict.items():
+            # parts = set(filter(lambda x: x, map(lambda x: re.sub('%s' % var, type, x.strip()),
+            #                 filter(lambda x: len(x) > 2, re.split(r'(\||->|\n|\(|\)|&)', content)))))
+            parts = set(filter(lambda x: x, map(lambda x: x.strip(),
+                                                filter(lambda x: len(x) > 2,
+                                                       re.split(r'&', content)))))
+            # re.split(r'(\||->|\n|\(|\)|&)', content)))))
 
-        temp_field.content = list(filter(lambda x: x, map(lambda x: x.strip(),
-                                                          filter(lambda x: len(x) > 2,
-                                                                 re.split(r'(\||->|\n|\(|\)|&)', content)))))
-        self.all_sentence |= parts
-        self.forfield.append(temp_field)
+            temp_field.content = list(filter(lambda x: x, map(lambda x: x.strip(),
+                                                              filter(lambda x: len(x) > 2,
+                                                                     re.split(r'&', content)))))
+            # re.split(r'(\||->|\n|\(|\)|&)', content)))))
+            self.all_sentence |= parts
+            self.forfield.append(temp_field)
 
     def deal_exist(self, text):
         pattern = re.compile(r'!?exists(.*?)do(.*)end', re.S)
-        params, content = re.findall(pattern, text)[0]
+        try:
+            params, content = re.findall(pattern, text)[0]
+        except:
+            print('cannot deal with %s ' % text)
+
         temp_field = Field()
 
         param_name_dict = analyzeParams(params)
@@ -231,9 +243,11 @@ class Guard(object):
         for var, type in param_name_dict.items():
             # for var, type, statesment in forall_parts:
             parts = set(map(lambda x: re.sub(var, type, x.strip()),
-                            filter(lambda x: len(x) > 2, re.split(r'(\||->|\n|\(|\)|&)', content))))
+                            filter(lambda x: len(x) > 2,
+                                   re.split(r'&', content))))  # re.split(r'(\||->|\n|\(|\)|&)', content))))
             temp_field.content = list(map(lambda x: x.strip(),
-                                          filter(lambda x: len(x) > 2, re.split(r'(\||->|\n|\(|\)|&)', content))))
+                                          filter(lambda x: len(x) > 2, re.split(r'&',
+                                                                                content))))  # re.split(r'(\||->|\n|\(|\)|&)', content))))
             self.all_sentence |= parts
             self.existfield.append(temp_field)
 
@@ -285,32 +299,34 @@ class Action(object):
             self.mainfield.content.append(a)
 
     def rm_for(self):
-        for_stmt = re.findall(r'(!?for.*?do.*end.*?;)', self.text, re.S)
+        for_stmt = re.findall(r'(!?for.*?do.*?endfor;)', self.text, re.S)
         for stmt in for_stmt:
             self.deal_for(stmt)
-        self.text = re.sub('for(?:.|\n)*do(?:.|\n)*end(?:.|\n)*?;', "", self.text, re.S)
+        self.text = re.sub('for(?:.|\n)*do(?:.|\n)*endfor(?:.|\n)*?;', "", self.text, re.S).strip('\n').strip(' ')
 
     def deal_for(self, text):
-        pattern = re.compile(r'!?for(.*?)do(.*)end|endfor;?', re.S)
+        pattern = re.compile(r'!?for(.*?)do(.*)endfor;?', re.S)
         params, content = re.findall(pattern, text)[0]
 
         temp_field = Field()
 
         param_name_dict = analyzeParams(params)
         temp_field.para_dict = param_name_dict
-        for var, type in param_name_dict.items():
-            parts = set(filter(lambda x: x, map(lambda x: x.strip(),
-                                                filter(lambda x: len(x) > 2,
-                                                       re.split(r'(\||->|\n|\(|\)|&|;)', content)))))
+        # for var, type in param_name_dict.items():
+        parts = set(filter(lambda x: x, map(lambda x: x.strip(),
+                                            filter(lambda x: len(x) > 2,
+                                                   re.split(';', content)))))
+        # re.split(r'(\||->|\n|\(|\)|&|;)', content)))))
 
-            temp_field.content = list(filter(lambda x: x, map(lambda x: x.strip(),
-                                                              filter(lambda x: len(x) > 2,
-                                                                     re.split(r'(\||->|\n|\(|\)|&|;)', content)))))
-            self.all_sentence |= parts
-            self.forfield.append(temp_field)
+        temp_field.content = list(filter(lambda x: x, map(lambda x: x.strip(),
+                                                          filter(lambda x: len(x) > 2,
+                                                                 re.split(';', content)))))
+        # re.split(r'(\||->|\n|\(|\)|&|;)', content)))))
+        self.all_sentence |= parts
+        self.forfield.append(temp_field)
 
     def rm_exist(self):
-        exist_stmt = re.findall(r'(!?exists.*?do.*end.*?;)', self.text, re.S)
+        exist_stmt = re.findall(r'(!?exists.*?do.*endexists.*?;)', self.text, re.S)
         for stmt in exist_stmt:
             self.deal_exist(stmt)
         self.text = re.sub(r'!?exists(.*?)do(.*)(end|endfor);', '', self.text)
@@ -359,7 +375,7 @@ class Ruleset(object):
 
     def collect_atoms_from_rule(self, rule_text, param_name_dict):
         pattern = re.compile(r'rule\s*\"(.*?)\"\s*(.*?)==>.*?begin(.*?)endrule\s*;', re.S)
-        rule_name, guards, actions = pattern.findall(rule_text)[0]
+        rule_name, guards, _ = pattern.findall(rule_text)[0]
         guard_obj = Guard(guards, param_name_dict)
         guard_obj.sparse()
         # if guard_obj:
@@ -488,7 +504,8 @@ class Abstractor(object):
             return temp_dict
 
         for pre, cond in aux_inv_list:
-            if re.findall('\!', cond): continue
+            if re.findall('!', cond):
+                continue
             parts = re.split(r'\s=\s', cond)
             left, right = parts[0], parts[1]
             if not re.findall(r'\[', right):
@@ -534,29 +551,33 @@ class Abstractor(object):
 
     def asbtract_obj(self, origin_obj, abs_para_list):
         abs_obj_list = []
+        # print('abstract list {} '.format(abs_para_list))
         for abs_para in abs_para_list:
-            abs_obj = Part()
-            abs_obj.mainfield.para_dict = origin_obj.mainfield.para_dict
-            abs_obj.mainfield.content = self.abstract_list(abs_para, origin_obj.mainfield.content)
+            # abs_obj = Part()
+            # abs_obj.mainfield.para_dict = origin_obj.mainfield.para_dict
+            origin_obj.mainfield.content = self.abstract_list(abs_para, origin_obj.mainfield.content)
+            # origin_obj.mainfield.content = abs_obj.mainfield.content
 
             index = 0
             while index < len(origin_obj.forfield) and origin_obj.forfield:
-                abs_obj.forfield.append(Field())
-                abs_obj.forfield[index].para_dict = origin_obj.forfield[index].para_dict
-                abs_obj.forfield[index].content = self.abstract_list(abs_para, origin_obj.forfield[index].content)
+                # abs_obj.forfield.append(Field())
+                # abs_obj.forfield[index].para_dict = origin_obj.forfield[index].para_dict
+                origin_obj.forfield[index].content = self.abstract_list(abs_para, origin_obj.forfield[index].content)
                 index += 1
 
             index = 0
             while index < len(origin_obj.existfield) and origin_obj.existfield:
-                abs_obj.existfield[index].para_dict = origin_obj.existfield[index].para_dict
-                abs_obj.existfield[index].content = self.abstract_list(abs_para, origin_obj.existfield[index].content)
+                # abs_obj.existfield[index].para_dict = origin_obj.existfield[index].para_dict
+                origin_obj.existfield[index].content = self.abstract_list(abs_para,
+                                                                          origin_obj.existfield[index].content)
                 index += 1
 
-            abs_obj_list.append(abs_obj)
+            # abs_obj_list.append(abs_obj)
 
-        return abs_obj_list
+        return [origin_obj]  # abs_obj_list
 
     def abstract_list(self, abs_para, waiting_list):
+
         if not abs_para: abs_para = abs_para
         rest_list = []
         for wl in waiting_list:
@@ -597,15 +618,12 @@ class Abstractor(object):
 
     def abstract_2_para(self):
         abs_para = [self.abs_type + '_1']
-        print(abs_para)
         self.abstract_1_para(abs_para)
 
         abs_para = [self.abs_type + '_2']
-        print(abs_para)
         self.abstract_1_para(abs_para)
 
         abs_para = [self.abs_type + '_1', self.abs_type + '_2']
-        print(abs_para)
         self.abstract_1_para(abs_para)
 
     def evaluate(self, abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix=""):
@@ -616,9 +634,6 @@ class Abstractor(object):
         print('abs_inv', abs_inv)
 
     def print_abs_rule(self, abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix=""):
-        para_dict = abs_guard_obj.mainfield.para_dict.copy()
-        for k in abs_para_list:
-            para_dict.pop(k)
 
         def pop_key_from_field_list(temp_obj, k_list):
             new_obj = copy.deepcopy(temp_obj)
@@ -631,42 +646,51 @@ class Abstractor(object):
                     item.para_dict.pop(k)
             return new_obj
 
-        main_list = [k for k in abs_guard_obj.mainfield.para_dict.keys()]
-        print_string = ""
-
-        if len(para_dict) >= 1:
-            print_string = print_string + '\n\nruleset %s do' % '; '.join(
-                ('{} : {}'.format(k, v) for k, v in para_dict.items()))
-
-        print_string += '\nrule \"ABS_%s_%s\"\n' % (self.rulename, prefix)
-
-        guard_string = self.print_guard(
-            pop_key_from_field_list(abs_guard_obj, set(abs_para_list) | set(main_list)))
-        inv_string = self.print_inv(abs_inv, para_dict)
-
-        if guard_string and inv_string:
-            print_string += '\n \t& '.join([guard_string, inv_string])
-        elif guard_string and not inv_string:
-            print_string += guard_string
-        elif not guard_string and inv_string:
-            print_string += inv_string
+        para_dict = abs_guard_obj.mainfield.para_dict.copy()
+        try:
+            for k in abs_para_list:
+                if k in para_dict:
+                    para_dict.pop(k)
+        except getopt.GetoptError:
+            sys.stderr.write(
+                'Cannot find some of [{}] in [{}]'.format(','.join(abs_para_list), ','.join(para_dict.keys())))
         else:
-            print_string += '\n\tTrue'
+            main_list = [k for k in abs_guard_obj.mainfield.para_dict.keys()]
+            print_string = ""
 
-        print_string += '\n==>\nbegin'
+            if len(para_dict) >= 1:
+                print_string = print_string + '\n\nruleset %s do' % '; '.join(
+                    ('{} : {}'.format(k, v) for k, v in para_dict.items()))
 
-        for k in main_list:
-            if k in abs_action_obj.mainfield.para_dict:
-                abs_action_obj.mainfield.para_dict.pop(k)
+            print_string += '\nrule \"ABS_%s_%s\"\n' % (self.rulename, prefix)
 
-        print_string = print_string + self.print_action(
-            pop_key_from_field_list(abs_action_obj, set(abs_para_list) | set(main_list)))
+            guard_string = self.print_guard(
+                pop_key_from_field_list(abs_guard_obj, set(abs_para_list) | set(main_list)))
+            inv_string = self.print_inv(abs_inv, para_dict)
 
-        print_string = print_string + '\nendrule;'
-        if len(para_dict) >= 1:
-            print_string += '\nendruleset;\n'
+            if guard_string and inv_string:
+                print_string += '\n \t& '.join([guard_string, inv_string])
+            elif guard_string and not inv_string:
+                print_string += guard_string
+            elif not guard_string and inv_string:
+                print_string += inv_string
+            else:
+                print_string += '\n\tTrue'
 
-        self.print_string = print_string
+            print_string += '\n==>\nbegin'
+
+            for k in main_list:
+                if k in abs_action_obj.mainfield.para_dict:
+                    abs_action_obj.mainfield.para_dict.pop(k)
+
+            print_string = print_string + self.print_action(
+                pop_key_from_field_list(abs_action_obj, set(abs_para_list) | set(main_list)))
+
+            print_string = print_string + '\nendrule;'
+            if len(para_dict) >= 1:
+                print_string += '\nendruleset;\n'
+
+            self.print_string = print_string
 
     def print_inv(self, abs_inv, para_dict):
         if not abs_inv: return ""
@@ -674,7 +698,7 @@ class Abstractor(object):
         print_string = ""
         for cur_type in self.all_types:
             for ai in abs_inv:
-                for index, type_para in enumerate(re.findall(r'%s\_\d' % cur_type, ai), 1):
+                for _, type_para in enumerate(re.findall(r'%s\_\d' % cur_type, ai), 1):
                     cur_para_dict['%s' % (type_para)] = cur_type
         for para in para_dict:
             if para in cur_para_dict:
@@ -691,50 +715,136 @@ class Abstractor(object):
         return print_string
 
     def print_guard(self, guard_obj):
+        # print('\nenter print_guard')
+        def judge(stmt):
+            if re.findall('Other', stmt):
+                # print(stmt)
+                if re.findall(r'!=', stmt):
+                    return str(len(set(map(lambda x: x.strip(' '), re.split(r'!=', stmt)))) != 1)
+                elif re.findall(r'=', stmt):
+                    return str(len(set(map(lambda x: x.strip(' '), re.split(r'=', stmt)))) == 1)
+                else:
+                    return stmt
+            else:
+                return stmt
+
         print_string = ""
 
         if guard_obj.mainfield.content:
-            print_string = print_string + '\n\t' + ' &\n\t'.join(guard_obj.mainfield.content)
+            print_string = print_string + '\n\t' + ' &\n\t'.join(map(lambda x: judge(x), guard_obj.mainfield.content))
 
         for for_item in guard_obj.forfield:
-            if not for_item.content: continue
+            if not for_item.content:
+                continue
             print_string += ('\n\t& forall {}'.format('; '.join(
                 ('{} : {}'.format(k, v) for k, v in
-                 for_item.para_dict.items()))) + ' do' + '\n\t\t\t' + ' &\n\t\t'.join(
-                for_item.content) + '\n\tend')
+                 for_item.para_dict.items()))) + ' do' + '\n\t\t\t' +
+                             ' &\n\t\t'.join(map(lambda x: judge(x), for_item.content))
+                             + '\n\tend')
 
         for exist_item in guard_obj.existfield:
             if not exist_item.content: continue
             print_string = print_string + '\t& exists {}'.format('; '.join(
                 ('{} : {}'.format(k, v) for k, v in
                  exist_item.para_dict.items()))) + ' do' + '\n\t\t' + ' &\n\t\t'.join(
-                exist_item.content) + '\n\tend'
+                map(lambda x: judge(x), exist_item.content)) + '\n\tend'
 
         return print_string
 
     def print_action(self, action_obj):
+        def judge(stmt):
+            if re.findall('Other', stmt):
+                if re.findall(r'Other\s?=\s?Other', stmt):
+                    stmt = re.sub(r'Other\s?=\s?Other', 'true', stmt)
+                    # return str(True)
+                elif re.findall(r'Other\s?!=\s?Other', stmt):
+                    stmt = re.sub(r'Other\s?!=\s?Other', 'false', stmt)
+                    # return str(False)
+                elif re.findall(r'Other\s?!=\s?(\w+)', stmt):
+                    stmt = re.sub(r'Other\s?!=\s?(\w+)', 'true', stmt)
+                    # return str(True)
+                elif re.findall(r'(\w+)\s?!=\s?Other', stmt):
+                    stmt = re.sub(r'(\w+)\s?!=\s?Other', 'true', stmt)
+                elif re.findall(r'Other\s?=\s?(\w+)', stmt):
+                    stmt = re.sub(r'Other\s?=\s?(\w+)', 'false', stmt)
+                elif re.findall(r'(\w+)\s?=\s?Other', stmt):
+                    stmt = re.sub(r'(\w+)\s?=\s?Other', 'false', stmt)
+                    # return str(False)
+                # else:
+            return stmt
+                    # print('cannot determin {}'.format(stmt))
+            #     if re.findall(r'!=', stmt):
+            #         return str(len(set(map(lambda x: x.strip(' '), re.split(r'!=', stmt)))) != 1)
+            #     # elif re.findall(r':=', stmt):
+            #     #     return stmt
+            #     elif re.findall(r'=', stmt):
+            #         return str(len(set(map(lambda x: x.strip(' '), re.split(r'=', stmt)))) == 1)
+            #     else:
+            #         return stmt
+            # else:
+            #     return stmt
+
         print_string = ""
         if action_obj.mainfield.para_dict:
             print_string += ('\n\tfor {}'.format('; '.join(
                 ('{} : {}'.format(k, v) for k, v in
                  action_obj.mainfield.para_dict.items()))) + ' do' + '\n\t\t\t' + '; \n\t\t'.join(
-                action_obj.mainfield.content) + ';\n\tend')
-        else:
-            print_string += '\n\t' + ' ;\n\t'.join(action_obj.mainfield.content) + ';'
+                map(lambda x: judge(x), action_obj.mainfield.content)) + ';\n\tend')
+        elif action_obj.mainfield.content:
+            print_string += '\n\t{};'.format(' ;\n\t'.join(map(lambda x: judge(x), action_obj.mainfield.content)))
 
         for for_item in action_obj.forfield:
-            if not for_item.content: continue
+            if not for_item.content or not for_item.para_dict.items():
+                # print('\n\n{},{}\n\n'.format(for_item.content,for_item.para_dict))
+                continue
+
             print_string = print_string + '\n\tfor ' + '; '.join(
                 ('{} : {}'.format(k, v) for k, v in for_item.para_dict.items())) + ' do'
-            print_string = print_string + '\n\t\t' + ' ;\n\t\t'.join(for_item.content)
-            print_string = print_string + ';\n\tend'
+            print_string = print_string + '\n\t\t'  # + ' ;\n\t\t'.join(for_item.content)
+            i = 0
+            if_flag = False
+            while i < len(for_item.content):
+                tmp = for_item.content[i]
+                if for_item.content[i] in {'if', 'elsif'}:
+                    if_flag = True
+                    print_string += for_item.content[i] + ' '
+                elif for_item.content[i] in {'else'}:
+                    print_string += for_item.content[i] + ' '
+                elif for_item.content[i] in {'endif', 'end'}:
+                    print_string += for_item.content[i] + '\n '
+                elif for_item.content[i] in {'then'}:
+                    if_flag = False
+                    print_string += for_item.content[i] + '\n '
+                elif i > 0 and if_flag:  # for_item.content[i - 1] in {'if', 'elsif'}:
+                    print_string += judge(for_item.content[i]) + ' \n\t\t'
+                    if for_item.content[i + 1] not in {'else', 'then', 'elsif'}:
+                        print_string += ' & '
+                elif not for_item.content[i].startswith('for'):
+                    print_string += judge(for_item.content[i]) + ' ;\n\t\t'
+                i += 1
+            print_string = print_string + ';\n\tendfor;'
 
         for exist_item in action_obj.existfield:
             if not exist_item.content: continue
             print_string = print_string + '\n\texists ' + '; '.join(
                 ('{} : {}'.format(k, v) for k, v in exist_item.para_dict.items())) + ' do'
-            print_string = print_string + '\n\t\t' + ' ;\n\t\t'.join(exist_item.content)
-            print_string = print_string + ';\n\tend'
+            print_string = print_string + '\n\t\t'  # + ' ;\n\t\t'.join(exist_item.content)
+            i = 0
+            if_flag = False
+            while i < len(exist_item.content):
+                if exist_item.content[i] in {'if', 'elsif', 'else'}:
+                    if_flag = True
+                    print_string += exist_item.content[i] + ' '
+                elif exist_item.content[i] in {'then', 'endif', 'end'}:
+                    if_flag = False
+                    print_string += exist_item.content[i] + '\n '
+                elif i > 0 and if_flag:  # for_item.content[i - 1] in {'if', 'elsif'}:
+                    print_string += judge(exist_item.content[i]) + ' \n\t\t'
+                    if exist_item.content[i + 1] not in {'else', 'then', 'elsif'}:
+                        print_string += ' & '
+                else:
+                    print_string += exist_item.content[i] + ' ;\n\t\t'
+                i += 1
         return print_string
 
 
