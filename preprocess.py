@@ -3,6 +3,7 @@
 
 import os
 import re
+import pty
 import time
 import copy
 import subprocess
@@ -44,12 +45,18 @@ class DataProcess(object):
         self.name = name
         self.replace_index = replace_index
 
+    def read_trans(self):
+        dataList, stateDict = self.read_trans_dataset()
+        para_digit = self.para_form(stateDict.keys())
+        dataset, itemMeaning = self.state2num_trans(dataList, stateDict)
+        return dataset, itemMeaning, para_digit
+
     def execute(self, save=True, load=False):
-        # if load:
-        #     try:
-        #         return joblib.load("%s/data/dataset.pkl" % self.name), joblib.load("%s/itemMeaning.pkl" % self.name)
-        #     except:
-        #         raise FileExistsError
+        if load:
+            try:
+                return joblib.load("%s/data/dataset.pkl" % self.name), joblib.load("%s/itemMeaning.pkl" % self.name)
+            except:
+                raise FileExistsError
         dataList, stateDict = self.collect_dataset()
         para_digit = self.para_form(stateDict.keys())
         dataset, itemMeaning = self.encode(dataList, stateDict)
@@ -92,8 +99,11 @@ class DataProcess(object):
             {v1: {e11,e21,..., en1}, v2: {e12,e22, ..., en2},...}
         """
         print('Reading reachable set')
-        if not os.path.exists('{0}/{0}.csv'.format(self.name)) and not os.path.exists('{0}/{0}.txt'.format(self.name)):
-            raise FileExistsError
+
+        # if not os.path.exists('{0}/{0}.csv'.format(self.name)) and not os.path.exists(
+        #         '{0}/{0}.txt'.format(self.name)) and not os.path.exists('{0}/trans_dataset.csv'.format(self.name)):
+        #     raise FileExistsError
+
         if not os.path.exists('{0}/{0}.csv'.format(self.name)) or not self.is_rs_match_dataset():
             return self.txt2csv()
         else:
@@ -119,6 +129,18 @@ class DataProcess(object):
     def readcsv(self):
         print('call read_csv')
         df = pd.read_csv('{0}/{0}.csv'.format(self.name))
+        stateDict = {}
+        booleandf = set(df.select_dtypes(include=[bool]).columns.values)
+
+        for col in df.columns:
+            if col in booleandf:
+                df[col] = df[col].map({True: 'true', False: 'false'})
+            stateDict[col] = set(df[col])
+        return [df.columns.tolist()] + df.values.tolist(), stateDict
+
+    def read_trans_dataset(self):
+        print('call trans_dataset')
+        df = pd.read_csv('{0}/trans_dataset.csv'.format(self.name))
         stateDict = {}
         booleandf = set(df.select_dtypes(include=[bool]).columns.values)
 
@@ -169,7 +191,7 @@ class DataProcess(object):
 
         return dataset, itemMeaning
 
-    def tonumber(self, stateList, statesDict, atom=False, neg=False):
+    def tonumber(self, stateList, statesDict, trans=True, atom=False, neg=False):
         if atom:
             stateList, statesDict = self.atom_feature(statesDict, stateList, self.get_atoms())
             mappingDict, itemMeaning = self.states2num_atom(statesDict)
@@ -183,6 +205,7 @@ class DataProcess(object):
         states_numberful = self.mapStates(mappingDict, stateList)
 
         return states_numberful, itemMeaning
+
 
     def enumerateStates(self, stateslist):
         statesDict = collections.defaultdict(set)
@@ -236,6 +259,26 @@ class DataProcess(object):
 
         print("Features / Atomic predicates: % d " % len(atom_feature))
         return t_statelist, new_stateDict
+
+    def state2num_trans(self, stateList, statesDict):
+        dataset = stateList
+        newDict = collections.defaultdict(lambda: collections.defaultdict(int))
+        itemMeaning = {}
+        cnt = 0
+
+        row, col = len(stateList), len(stateList[0])
+        for key, value in statesDict.items():
+            for v in value:
+                if v in ('true', 'True'):
+                    itemMeaning[cnt] = key
+                if v in ('false', 'False'):
+                    itemMeaning[cnt] = '!' + key
+                newDict[key][v] = cnt
+                cnt += 1
+
+        state_numberful = self.mapStates(newDict,dataset)
+
+        return state_numberful, itemMeaning
 
     def states2num_atom(self, statesDict):
         newDict = collections.defaultdict(lambda: collections.defaultdict(int))
@@ -388,7 +431,8 @@ class RuleLearing(object):
                 cur_t_set = set(re.findall('%s_\d' % t, rule_string))
                 if len(cur_t_set) == 0:  # not contain type parameter
                     continue
-                elif len(cur_t_set) == 1:  # 含一种type parameter, such as 'NODE_1'
+                elif len(cur_t_set) == 1:  
+                # 含一种type parameter, such as 'NODE_1'
                     if '%s_1' % t in tmp_stmt:
                         tmp_stmt = re.sub('%s_1' % t, '%s_2' % t, rule_string)
                     elif '%s_2' % t in tmp_stmt:
@@ -396,11 +440,11 @@ class RuleLearing(object):
                     else:
                         print('Too many parameters!')
                     if tmp_stmt in rule_string_set:
-                        # print('here')
-                        # print(tmp_stmt, rule_string, tmp_stmt in rule_string_set, rule_string in rule_string_set)
                         if rule_string in rule_string_set:
                             rule_string_set.remove(rule_string)
-                elif len(cur_t_set) == 2:  # 含2种type parameter, such as 'NODE_1' and 'NODE_2'
+
+                elif len(cur_t_set) == 2:  
+                # 含2种type parameter, such as 'NODE_1' and 'NODE_2'
                     cur_t_dict = {}
                     for i, cur_t in enumerate(cur_t_set):
                         cur_t_dict['REP_X_%d' % i] = cur_t
@@ -427,32 +471,36 @@ class RuleLearing(object):
         rule_string_set = set(rule_string_list)
 
         # print(rule_string_list)
-        for rule_string in rule_string_list:
-            for t in all_types:
-                tmp_stmt = rule_string
-                cur_t_set = set(re.findall('%s\_\d' % t, rule_string))
-                if len(cur_t_set) == 0:  # not contain type parameter
-                    continue
-                elif len(cur_t_set) == 1:  # 含一种type parameter, such as 'NODE_1'
-                    if '%s_1' % t in tmp_stmt:
-                        tmp_stmt = re.sub('%s_1' % t, '%s_2' % t, rule_string)
-                    elif '%s_2' % t in tmp_stmt:
-                        tmp_stmt = re.sub('%s_2' % t, '%s_1' % t, tmp_stmt)
+        try:
+            for rule_string in rule_string_list:
+                for t in all_types:
+                    tmp_stmt = rule_string
+                    cur_t_set = set(re.findall('%s\_\d' % t, rule_string))
+                    if len(cur_t_set) == 0:  # not contain type parameter
+                        continue
+                    elif len(cur_t_set) == 1:  # 含一种type parameter, such as 'NODE_1'
+                        if '%s_1' % t in tmp_stmt:
+                            tmp_stmt = re.sub('%s_1' % t, '%s_2' % t, rule_string)
+                        elif '%s_2' % t in tmp_stmt:
+                            tmp_stmt = re.sub('%s_2' % t, '%s_1' % t, tmp_stmt)
+                        else:
+                            print('Too many parameters!')
+                        if tmp_stmt not in rule_string_set:
+                            rule_string_set.add(tmp_stmt)
+                    elif len(cur_t_set) == 2:  # 含2种type parameter, such as 'NODE_1' and 'NODE_2'
+                        cur_t_dict = {}
+                        for i, cur_t in enumerate(cur_t_set):
+                            cur_t_dict['REP_X_%d' % i] = cur_t
+                            tmp_stmt = re.sub(cur_t, 'REP_X_%d' % i, tmp_stmt)
+                        for k, v in cur_t_dict.items():
+                            tmp_stmt = re.sub(k, (cur_t_set - set([v])).pop(), tmp_stmt)
+                        if tmp_stmt not in rule_string_set:
+                            rule_string_set.add(tmp_stmt)
                     else:
-                        print('Too many parameters!')
-                    if tmp_stmt not in rule_string_set:
-                        rule_string_set.add(tmp_stmt)
-                elif len(cur_t_set) == 2:  # 含2种type parameter, such as 'NODE_1' and 'NODE_2'
-                    cur_t_dict = {}
-                    for i, cur_t in enumerate(cur_t_set):
-                        cur_t_dict['REP_X_%d' % i] = cur_t
-                        tmp_stmt = re.sub(cur_t, 'REP_X_%d' % i, tmp_stmt)
-                    for k, v in cur_t_dict.items():
-                        tmp_stmt = re.sub(k, (cur_t_set - set([v])).pop(), tmp_stmt)
-                    if tmp_stmt not in rule_string_set:
-                        rule_string_set.add(tmp_stmt)
-                else:
-                    print('Too many types of parameters!')
+                        print('Too many types of parameters!')
+        except getopt.GetoptError:
+            sys.stderr.write('Cannot instantiation, skip')
+            # sys.exit()
 
         sym_expan_rule_string = list(rule_string_set)
         sym_expan_rule_tuple = list(map(lambda x: split_string_to_tuple(x), sym_expan_rule_string))
@@ -945,7 +993,7 @@ class SlctInv(object):
     # def update_test_rules(self, new_set):
     #     self.test_rules = {'rule_%d' % i: rule for i, rule in enumerate(new_set, 1)}
 
-    def select_invariant(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None):
+    def select_invariant(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None,aux_para=""):
         print('\nchecking invariants...')
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
 
@@ -964,7 +1012,7 @@ class SlctInv(object):
         spurious_index = []
         with multiprocessing.Pool(num_core) as p:
             spurious_index.extend(p.starmap(self.parallel,
-                                            [(index_range, pid, translate_dic, original_file) for
+                                            [(index_range, pid, translate_dic, original_file,aux_para) for
                                              pid, index_range
                                              in enumerate(jobs, 1)]))
 
@@ -982,6 +1030,7 @@ class SlctInv(object):
 
     def run_murphi(self, file, aux_para=''):
         file = file.split('.')[0]
+        print('compile murphi to cpp....')
         process1 = subprocess.Popen("{0}/src/mu {1}.m".format(self.murphi_dir, file), shell=True,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -990,29 +1039,35 @@ class SlctInv(object):
         if not re.search(r'Code generated', stdout.decode('utf-8')):
             print('here', stderr.decode('utf-8'))
             # raise ValueError
+        else:
+            print('Code generated')
 
+        print('compile cpp to executive file....')
         command2 = "g++ -ggdb -o {0}.o {0}.cpp -I {1}/include -lm".format(file, self.murphi_dir)
         process2 = subprocess.Popen(command2, shell=True,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
         process2.communicate()
 
-        process = subprocess.Popen("{0}.o -k10000000 {1} -pr".format(file, aux_para), shell=True,
+        print('running executive file....')
+        process = subprocess.Popen("{0}.o -m1000 {1}".format(file, aux_para), shell=True,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
+        # for line in process.stdout:
+        #     print(line.decode('utf-8').replace('\n',''))
 
         (stdoutdata, stderrdata) = process.communicate()
 
-        pattern_counter = re.compile(r'Invariant\s"(\w+).*"\sfailed')
+        pattern_counter = re.compile(r'Invariant\s"(\w+).*"\sfailed.')
         counter_ex = re.findall(pattern_counter, stdoutdata.decode('utf-8'))
         # 如果有反例，则记录它的下标， 并输出
         if len(counter_ex):
-            print("%s failed!" % counter_ex[0])
+            print("%s failed!" % ','.join(counter_ex))
 
         os.remove('%s.cpp' % file)
         os.remove('%s.o' % file)
 
-        return counter_ex[0] if len(counter_ex) else 0
+        return counter_ex if len(counter_ex) else []
 
     def translate_test_inv(self, test_rule_string_dict):
         # test_invs is empty
@@ -1024,7 +1079,7 @@ class SlctInv(object):
                 {key: '\n\nInvariant \"%s\"\n' % key + self.to_murphi(rule)})
         return translate_dic
 
-    def parallel(self, index_range, id, translate_dic, original_file):
+    def parallel(self, index_range, id, translate_dic, original_file,aux_para=""):
         start, end = index_range
         counters = []
         new_file = "{}_{}.m".format(original_file.split('.')[0], id)
@@ -1032,24 +1087,28 @@ class SlctInv(object):
         with open(new_file, 'a') as f:
             for rule_num in range(start + 1, end + 1):
                 f.writelines(translate_dic['rule_%d' % rule_num])
-        counter_ex = self.run_murphi(new_file)
+        counter_ex_list = self.run_murphi(new_file,aux_para)
 
-        while counter_ex:
-            if not re.findall('rule_\d', counter_ex):
-                print(counter_ex)
-                break
-            counters.append(counter_ex)
-            pattern = re.compile(r'Invariant \"%s\".*?;\n' % counter_ex, re.S)
-            new_content = re.sub(pattern, '', open(new_file).read())
+        # for counter_ex in counter_ex_list:
+        if len(counter_ex_list):
+            for counter_ex in counter_ex_list:
+                if not re.findall('rule_\d', counter_ex):
+                    print(counter_ex)
+                    break
+                counters.append(counter_ex)
+                
+                # pattern = re.compile(r'Invariant \"%s\".*?;\n' % counter_ex, re.S)
+                # new_content = re.sub(pattern, '', open(new_file).read())
+                print('remove %s'%counter_ex)
 
-            with open(new_file, 'w') as fw:
-                fw.writelines(new_content)
-            counter_ex = self.run_murphi(new_file)
+            # with open(new_file, 'w') as fw:
+                # fw.writelines(new_content)
+            # counter_ex_list = self.run_murphi(new_file)
 
         os.remove("{}.m".format(new_file.split('.')[0]))
         # os.remove("{}.cpp".format(new_file.split('.')[0]))
         # os.remove("{}.o".format(new_file.split('.')[0]))
-
+        print(counters)
         return counters
 
     def to_murphi(self, rule):
@@ -1092,10 +1151,10 @@ class SlctInv(object):
 
         return murphi_string
 
-    def check_usedF(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None):
+    def check_usedF(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None,aux_para=""):
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
         print('checking %s' % original_file)
-        spurious_cnt, counterex_index = self.select_invariant(test_rule_string, num_core, original_file)
+        spurious_cnt, counterex_index = self.select_invariant(test_rule_string, num_core, original_file, aux_para)
         print('counterex_index', counterex_index)
         if not spurious_cnt:
             print('usedF all passed!')
