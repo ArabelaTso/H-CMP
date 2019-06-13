@@ -1,0 +1,30 @@
+-- Auxiliary invariants used by Crit:
+x = true -> n[NODE_2] != C
+
+-- Auxiliary invariants used by Crit:
+x = true -> n[NODE_2] != C
+
+-- Auxiliary invariants used by Try:
+n[NODE_1] = I -> n[NODE_2] != C
+n[NODE_1] = I -> x = true
+
+-- Auxiliary invariants used by Crit:
+x = true -> n[NODE_2] != C
+
+-- Auxiliary invariants used by Try:
+n[NODE_1] = I -> n[NODE_2] != C
+n[NODE_1] = I -> x = true
+
+-- Auxiliary invariants used by Crit:
+x = true -> n[NODE_2] != C
+
+-- Auxiliary invariants used by Try:
+n[NODE_1] = I -> n[NODE_2] = I
+n[NODE_1] = I -> x = true
+
+-- Auxiliary invariants used by Crit:
+x = true -> n[NODE_2] != C
+
+-- Auxiliary invariants used by Crit:
+x = true -> n[NODE_2] != C
+

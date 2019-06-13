@@ -1,0 +1,6 @@
+reachableset: 0.00
+auxiliary: 0.00
+strengthening: 0.01
+final-check: 6.21
+total: 6.22
+iter: 3

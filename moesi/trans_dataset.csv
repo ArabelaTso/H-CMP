@@ -1,0 +1,7 @@
+a[NODE_2] = S,a[NODE_1] = E,a[NODE_2] = M,a[NODE_1] = OSTATUS,a[NODE_1] = I,a[NODE_1] = M,a[NODE_2] = E,a[NODE_2] = OSTATUS,a[NODE_2] = I,a[NODE_1] = S
+False,False,False,False,True,False,False,False,True,False
+False,True,False,False,False,False,False,False,True,False
+False,False,False,False,False,False,False,False,True,True
+True,False,False,False,False,False,False,False,False,True
+False,False,False,False,False,True,False,False,True,False
+True,False,False,True,False,False,False,False,False,False

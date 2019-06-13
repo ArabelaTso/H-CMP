@@ -1,0 +1,22 @@
+rule_1: n[NODE_2].st = C -> x = false
+rule_2: x = true -> n[NODE_2].st != C
+rule_3: x = true -> n[NODE_2].st != E
+rule_4: x = true -> n[NODE_1].st != E
+rule_5: n[NODE_1].st = E -> x = false
+rule_6: n[NODE_2].st = E -> x = false
+rule_7: x = true -> n[NODE_1].st != C
+rule_8: n[NODE_1].st = C -> x = false
+rule_9: n[NODE_1].st = E -> n[NODE_2].st != E
+rule_10: n[NODE_1].st = C -> n[NODE_2].st != E
+rule_11: n[NODE_1].st = C -> n[NODE_2].st != C
+rule_12: n[NODE_2].st = E -> n[NODE_1].st != C
+rule_13: n[NODE_2].st = C -> n[NODE_1].st != C
+rule_14: n[NODE_2].st = E -> n[NODE_1].st != E
+rule_15: n[NODE_2].st = C -> n[NODE_1].st != E
+rule_16: n[NODE_1].st = E -> n[NODE_2].st != C
+rule_17: n[NODE_2].st = E -> n[NODE_2].data = auxDATA
+rule_18: n[NODE_1].st = E -> n[NODE_1].data = auxDATA
+rule_19: n[NODE_1].st = T & x = true -> n[NODE_2].st != E
+rule_20: n[NODE_2].st = T & x = true -> n[NODE_1].st != C
+rule_21: n[NODE_1].st = T & x = true -> n[NODE_2].st != C
+rule_22: n[NODE_2].st = T & x = true -> n[NODE_1].st != E

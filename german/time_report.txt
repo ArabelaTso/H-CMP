@@ -1,0 +1,8 @@
+reachableset: 18.21
+preprocess: 0.21
+association: 2.85
+auxiliary: 3.56
+strengthening: 0.04
+final-check: 4.37
+total: 31.76
+iter: 1

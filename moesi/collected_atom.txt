@@ -1,0 +1,4 @@
+a[NODE] = S
+a[NODE] = I
+a[NODE] = OSTATUS
+a[NODE] = E
