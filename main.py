@@ -8,6 +8,7 @@ import getopt
 import copy
 import subprocess
 import collections
+from collections import OrderedDict
 import multiprocessing
 import preprocess as preprocess
 import analyser as analyser
@@ -85,7 +86,6 @@ def run_murphi(file, aux_para=''):
     return counter_ex[0] if len(counter_ex) else 0
 
 
-
 class TimeRecorder(object):
     def __init__(self, protocol_name):
         self.protocol_name = protocol_name
@@ -101,7 +101,6 @@ class TimeRecorder(object):
             for what, dur in self.time_stamps.items():
                 print("{}: {}".format(what, dur))
                 fw.write("{}: {}\n".format(what, dur))
-
 
 
 if __name__ == "__main__":
@@ -122,12 +121,12 @@ if __name__ == "__main__":
 
         sys.stderr.write(prefix_msg)
         #
-        # opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:k:z:h',
-        #                            ['protocol=', 'abs_type=', 'node=', 'kernel=', 'z3=','help'])
-        opts = [('-p', 'german'), ('-a', 'NODE'), ('-k', 1), ('-n', 2), ('-z', 1)]
+        opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:h',
+                                   ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'help'])
+        opts = [('-p', 'mutualEx'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
 
         protocol_name, abs_type = '', ''
-        NODE_NUM, set_n, min_support, min_config, num_core, z3 = 2, 3, 0.0, 1.0, multiprocessing.cpu_count(), 0
+        NODE_NUM, set_n, min_support, min_config, kmax, num_core, z3 = 2, 3, 0.0, 1.0, 3, multiprocessing.cpu_count(), 0
 
         for opt, arg in opts:
             if opt in ('-h', '--help'):
@@ -139,7 +138,9 @@ if __name__ == "__main__":
                 NODE_NUM = int(arg)
             elif opt in ('-a', '--abs_type'):
                 abs_type = arg
-            elif opt in ('-k', '--kernel'):
+            elif opt in ('-k', '--kmax'):
+                kmax = int(arg)
+            elif opt in ('-c', '--core'):
                 num_core = int(arg)
             elif opt in ('-z', '--z3'):
                 z3 = int(arg)
@@ -161,9 +162,11 @@ if __name__ == "__main__":
         fileaname = "{0}/{0}.m".format(protocol_name)
         print('*' * 50)
         print('Protocol: %s' % protocol_name)
-        print("NODE_NUM={}, set_n={}, min_support={}, min_config={}, num_core={}, z3={}".format(NODE_NUM, set_n,
-                                                                                                min_support, min_config,
-                                                                                                num_core, z3))
+        print("NODE_NUM={}, set_n={}, min_support={}, min_config={}, kmax={}num_core={}, z3={}".format(NODE_NUM, set_n,
+                                                                                                       min_support,
+                                                                                                       min_config,
+                                                                                                       kmax, num_core,
+                                                                                                       z3))
         print('*' * 50)
 
         # create abstract protocol file
@@ -222,7 +225,13 @@ if __name__ == "__main__":
                 # need to learn association rules
                 # start preprocessing
                 start_time = time.time()
-                replace_index = None if NODE_NUM == 2 else {'NODE_1': 'Home', 'NODE_2': 'NODE_1', 'NODE_3': 'NODE_2'}
+                od = OrderedDict()
+                od['NODE_1'] = 'Home'
+                od['NODE_2'] = 'NODE_1'
+                od['NODE_3'] = 'NODE_2'
+                replace_index = None if NODE_NUM == 2 else od
+                # OrderedDict(
+                # {'NODE_1': 'Home', 'NODE_2': 'NODE_1', 'NODE_3': 'NODE_2'})
                 processor = preprocess.DataProcess(protocol_name, replace_index=replace_index)
                 dataset, itemMeaning, para_digit = processor.execute(load=False)
                 # end preprocessing
@@ -234,7 +243,8 @@ if __name__ == "__main__":
                 # learning association rules
                 # start association rule learning
                 start_time = time.time()
-                learner = preprocess.RuleLearing(protocol_name, dataset, itemMeaning, global_vars=global_vars)
+                learner = preprocess.RuleLearing(protocol_name, dataset, itemMeaning, global_vars=global_vars,
+                                                 max_freq_size=kmax)
                 rule_tuple, rule_string_list = learner.execute()
                 # end association rule learning
                 time_record.add_time('association', '%.2f' % (time.time() - start_time))

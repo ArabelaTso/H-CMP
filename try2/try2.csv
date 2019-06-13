@@ -1,0 +1,8 @@
+n[NODE_1],n[NODE_2],x
+I,I,true
+I,T,true
+I,C,false
+T,T,true
+I,E,false
+T,C,false
+T,E,false

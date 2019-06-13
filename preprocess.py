@@ -3,6 +3,7 @@
 
 import os
 import re
+import sys
 import pty
 import time
 import copy
@@ -41,9 +42,12 @@ def split_string_to_tuple(stmt):
 
 
 class DataProcess(object):
-    def __init__(self, name, replace_index):
+    def __init__(self, name, replace_index, atom_formulas=set(), has_atom=False):
         self.name = name
         self.replace_index = replace_index
+        self.atom_formulas = self.get_atoms(atom_formulas)
+        self.has_atom = os.path.exists('{0}/atom.txt'.format(self.name)) or has_atom
+        print(self.replace_index)
 
     def read_trans(self):
         dataList, stateDict = self.read_trans_dataset()
@@ -100,10 +104,6 @@ class DataProcess(object):
         """
         print('Reading reachable set')
 
-        # if not os.path.exists('{0}/{0}.csv'.format(self.name)) and not os.path.exists(
-        #         '{0}/{0}.txt'.format(self.name)) and not os.path.exists('{0}/trans_dataset.csv'.format(self.name)):
-        #     raise FileExistsError
-
         if not os.path.exists('{0}/{0}.csv'.format(self.name)) or not self.is_rs_match_dataset():
             return self.txt2csv()
         else:
@@ -126,9 +126,10 @@ class DataProcess(object):
         return int(re.findall(r'\d+', csv_cnt)[0]) == int(
             re.findall(r'State Space Explored:.*?(\d+)\sstates', tail_rs, re.S)[0]) + 1
 
-    def readcsv(self):
+    def readcsv(self, input_file=""):
         print('call read_csv')
-        df = pd.read_csv('{0}/{0}.csv'.format(self.name))
+        input_file = '{0}/{0}.csv'.format(self.name) if not input_file else input_file
+        df = pd.read_csv(input_file)
         stateDict = {}
         booleandf = set(df.select_dtypes(include=[bool]).columns.values)
 
@@ -153,11 +154,11 @@ class DataProcess(object):
     def txt2csv(self):
         print('txt2csv...')
         csv_filename = '{0}/{0}.csv'.format(self.name)
-
         reachset = open('{0}/{0}.txt'.format(self.name)).read()
 
         if self.replace_index:
             for k, v in self.replace_index.items():
+                print('replace %s by %s' % (k, v))
                 reachset = reachset.replace(k, v)
         states = re.findall(r'State\s\d+:\n(.*?)\n\n', reachset, re.S)
 
@@ -186,26 +187,22 @@ class DataProcess(object):
         print('---------------------\n')
 
     def encode(self, dataList, stateDict):
-        has_atom = os.path.exists('{0}/atom.txt'.format(self.name))
-        dataset, itemMeaning = self.tonumber(dataList, stateDict, atom=has_atom, neg=False)
+        dataset, itemMeaning = self.tonumber(dataList, stateDict, atom=self.has_atom, neg=False)
 
         return dataset, itemMeaning
 
     def tonumber(self, stateList, statesDict, trans=True, atom=False, neg=False):
         if atom:
-            stateList, statesDict = self.atom_feature(statesDict, stateList, self.get_atoms())
+            stateList, statesDict = self.atom_feature(statesDict, stateList)
             mappingDict, itemMeaning = self.states2num_atom(statesDict)
-            # states_numberful = self.mapStates(mappingDict, stateList)
         elif neg:
             stateList, statesDict = self.negative(stateList, statesDict)
             mappingDict, itemMeaning = self.states2num(statesDict)
-            # states_numberful = self.mapStates(mappingDict, stateList)
         else:
             mappingDict, itemMeaning = self.states2num(statesDict)
         states_numberful = self.mapStates(mappingDict, stateList)
 
         return states_numberful, itemMeaning
-
 
     def enumerateStates(self, stateslist):
         statesDict = collections.defaultdict(set)
@@ -217,17 +214,17 @@ class DataProcess(object):
                     statesDict[stateslist[0][c]].add(stateslist[r][c])
         return statesDict
 
-    def atom_feature(self, stateDict, stateList, atom_feature):
+    def atom_feature(self, stateDict, stateList):
         new_statelist, new_stateDict = [], {}
         index = {title: i for i, title in enumerate(stateList[0])}
-        print('index of atomic predicates:', index)
+        print('\nIndex of atomic predicates:', index)
 
-        for i, af in enumerate(atom_feature):
+        for i, af in enumerate(self.atom_formulas):
             pre = af.split(' ')[0]
             post = af.split(' ')[-1]
             if pre not in index:
-                print('cannot find %s in index' % pre)
-                continue
+                sys.stderr.write('Cannot find %s in Index' % pre)
+                sys.exit()
 
             col = index[pre]
             cur = [af]
@@ -257,7 +254,7 @@ class DataProcess(object):
             for state_line in t_statelist:
                 f.write('{}\n'.format(','.join(state_line)))
 
-        print("Features / Atomic predicates: % d " % len(atom_feature))
+        print("Features / Atomic predicates: % d " % len(self.atom_formulas))
         return t_statelist, new_stateDict
 
     def state2num_trans(self, stateList, statesDict):
@@ -276,7 +273,7 @@ class DataProcess(object):
                 newDict[key][v] = cnt
                 cnt += 1
 
-        state_numberful = self.mapStates(newDict,dataset)
+        state_numberful = self.mapStates(newDict, dataset)
 
         return state_numberful, itemMeaning
 
@@ -342,10 +339,13 @@ class DataProcess(object):
         print('successfully mapped!')
         return states_numberful
 
-    def get_atoms(self):
-        file_name = "{}/atom.txt".format(self.name)
-        return set(filter(lambda x: x,
-                          map(lambda x: re.sub(r'[()]', '', x.strip()), open(file_name, 'r').read().split("\n"))))
+    def get_atoms(self, atom_formulas):
+        if atom_formulas:
+            return atom_formulas
+        else:
+            file_name = "{}/atom.txt".format(self.name)
+            return set(filter(lambda x: x,
+                              map(lambda x: re.sub(r'[()]', '', x.strip()), open(file_name, 'r').read().split("\n"))))
 
     def select_global(self, itemMeaning):
         global_vars = set()
@@ -431,20 +431,21 @@ class RuleLearing(object):
                 cur_t_set = set(re.findall('%s_\d' % t, rule_string))
                 if len(cur_t_set) == 0:  # not contain type parameter
                     continue
-                elif len(cur_t_set) == 1:  
-                # 含一种type parameter, such as 'NODE_1'
+                elif len(cur_t_set) == 1:
+                    # 含一种type parameter, such as 'NODE_1'
                     if '%s_1' % t in tmp_stmt:
                         tmp_stmt = re.sub('%s_1' % t, '%s_2' % t, rule_string)
                     elif '%s_2' % t in tmp_stmt:
                         tmp_stmt = re.sub('%s_2' % t, '%s_1' % t, tmp_stmt)
                     else:
-                        print('Too many parameters!')
+                        print('%s contains too many parameters!' % tmp_stmt)
+
                     if tmp_stmt in rule_string_set:
                         if rule_string in rule_string_set:
                             rule_string_set.remove(rule_string)
 
-                elif len(cur_t_set) == 2:  
-                # 含2种type parameter, such as 'NODE_1' and 'NODE_2'
+                elif len(cur_t_set) == 2:
+                    # 含2种type parameter, such as 'NODE_1' and 'NODE_2'
                     cur_t_dict = {}
                     for i, cur_t in enumerate(cur_t_set):
                         cur_t_dict['REP_X_%d' % i] = cur_t
@@ -993,7 +994,7 @@ class SlctInv(object):
     # def update_test_rules(self, new_set):
     #     self.test_rules = {'rule_%d' % i: rule for i, rule in enumerate(new_set, 1)}
 
-    def select_invariant(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None,aux_para=""):
+    def select_invariant(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None, aux_para=""):
         print('\nchecking invariants...')
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
 
@@ -1012,7 +1013,7 @@ class SlctInv(object):
         spurious_index = []
         with multiprocessing.Pool(num_core) as p:
             spurious_index.extend(p.starmap(self.parallel,
-                                            [(index_range, pid, translate_dic, original_file,aux_para) for
+                                            [(index_range, pid, translate_dic, original_file, aux_para) for
                                              pid, index_range
                                              in enumerate(jobs, 1)]))
 
@@ -1079,7 +1080,7 @@ class SlctInv(object):
                 {key: '\n\nInvariant \"%s\"\n' % key + self.to_murphi(rule)})
         return translate_dic
 
-    def parallel(self, index_range, id, translate_dic, original_file,aux_para=""):
+    def parallel(self, index_range, id, translate_dic, original_file, aux_para=""):
         start, end = index_range
         counters = []
         new_file = "{}_{}.m".format(original_file.split('.')[0], id)
@@ -1087,7 +1088,7 @@ class SlctInv(object):
         with open(new_file, 'a') as f:
             for rule_num in range(start + 1, end + 1):
                 f.writelines(translate_dic['rule_%d' % rule_num])
-        counter_ex_list = self.run_murphi(new_file,aux_para)
+        counter_ex_list = self.run_murphi(new_file, aux_para)
 
         # for counter_ex in counter_ex_list:
         if len(counter_ex_list):
@@ -1096,13 +1097,13 @@ class SlctInv(object):
                     print(counter_ex)
                     break
                 counters.append(counter_ex)
-                
+
                 # pattern = re.compile(r'Invariant \"%s\".*?;\n' % counter_ex, re.S)
                 # new_content = re.sub(pattern, '', open(new_file).read())
-                print('remove %s'%counter_ex)
+                print('remove %s' % counter_ex)
 
             # with open(new_file, 'w') as fw:
-                # fw.writelines(new_content)
+            # fw.writelines(new_content)
             # counter_ex_list = self.run_murphi(new_file)
 
         os.remove("{}.m".format(new_file.split('.')[0]))
@@ -1151,7 +1152,7 @@ class SlctInv(object):
 
         return murphi_string
 
-    def check_usedF(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None,aux_para=""):
+    def check_usedF(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None, aux_para=""):
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
         print('checking %s' % original_file)
         spurious_cnt, counterex_index = self.select_invariant(test_rule_string, num_core, original_file, aux_para)
@@ -1163,42 +1164,3 @@ class SlctInv(object):
             print(spurious_cnt)
 
         return counterex_index
-
-    # def prnt_inv(self):
-    #     invs = set(v for k, v in self.test_rules.items())
-    #     with open("{}/invs.txt".format(self.name), 'w') as f:
-    #         for i, inv in enumerate(invs, 1):
-    #             f.writelines("rule_%d: %s\n" % (i, inv))
-    #     return invs
-
-#
-# protocol_name = "mutualEx"
-# fileaname = "mutdata.m"
-#
-# replace_index = None  # if NUM == 2 else {'NODE_1': 'Home'}
-# processor = DataProcess(protocol_name, replace_index=replace_index)
-# dataset, itemMeaning, para_digit = processor.execute(load=False)
-# global_vars = processor.select_global(itemMeaning)
-# print('local', global_vars)
-#
-# learner = RuleLearing(protocol_name, dataset, itemMeaning)
-# rule_tuple, rule_string_list = learner.execute()
-# all_types = ['NODE']
-# # learner.check_sym(all_types, rule_tuple)
-# rule_tuple, rule_string_list = learner.symmetry_reduction(rule_tuple, rule_string_list, all_types)
-# # print(len(rule_tuple), len(rule_string_list))
-#
-# # test_rule = ['n[NODE_2] = C & n[NODE_1] = I -> x = true', 'n[NODE_2] = C & n[NODE_1] = I -> x = false']
-# selector = SlctInv(protocol_name, [], all_types, rule_string_list, home=False)
-# _, counterex_index = selector.select_invariant(1, '{0}/{0}.m'.format(protocol_name))
-#
-# tmp_tuple, tmp_string = copy.deepcopy(rule_tuple), copy.deepcopy(rule_string_list)
-# for cex in counterex_index:
-#     tmp_tuple.remove(rule_tuple[cex])
-#     tmp_string.remove(rule_string_list[cex])
-#
-# rule_tuple, rule_string_list = tmp_tuple, tmp_string
-#
-# # learner.minimize_rule(all_types, rule_tuple)
-# min_rule_tuple, min_rule_string = learner.minimize_rule(rule_tuple)
-# aux_inv, aux_inv_string = learner.instantiate(min_rule_tuple, min_rule_string, all_types)

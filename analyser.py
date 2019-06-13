@@ -867,9 +867,7 @@ class Protocol(object):
         f = open(filename, 'r')
         self.text = f.read()
         f.close()
-        # self.show_config()
-        # self.execute()
-        # self.collect_atoms()
+
 
     def show_config(self):
         config = re.findall(r'(\w+)\s*:\s*(\d+)\s*;', self.text)
