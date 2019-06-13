@@ -1,2 +1,0 @@
-rule_1: x = true -> n[NODE_1] != C
-rule_2: x = true -> n[NODE_2] != C

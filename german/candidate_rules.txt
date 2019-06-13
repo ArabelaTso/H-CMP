@@ -1,1 +1,0 @@
-rule_1: Chan2[NODE_1].Cmd = GntE -> Chan2[NODE_1].Data = AuxData

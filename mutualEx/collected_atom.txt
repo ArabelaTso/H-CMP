@@ -1,5 +1,0 @@
-x = true
-n[NODE] = C
-n[NODE] = T
-n[NODE] = E
-n[NODE] = I

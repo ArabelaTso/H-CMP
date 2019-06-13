@@ -1,8 +1,0 @@
-reachableset: 26.26s
-preprocess: 0.00s
-association: 0.01s
-auxiliary: 4.38s
-strengthening: 0.00s
-final-check: 3.32s
-total: 34.04s
-iter: 1s
