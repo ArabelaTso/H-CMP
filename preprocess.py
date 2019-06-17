@@ -172,7 +172,6 @@ class DataProcess(object):
         for state in states:
             for var in state.split('\n'):
                 stateDict[var.split(":")[0]].add(var.split(":")[1])
-            # dataset.append([var for var in state.split('\n')])
             dataset.append([var.split(':')[1] for var in state.split('\n')])
 
         with open(csv_filename, 'w') as f:
@@ -263,7 +262,6 @@ class DataProcess(object):
         itemMeaning = {}
         cnt = 0
 
-        row, col = len(stateList), len(stateList[0])
         for key, value in statesDict.items():
             for v in value:
                 if v in ('true', 'True'):
@@ -286,9 +284,9 @@ class DataProcess(object):
             for v in value:
                 if v == 'Undefined':
                     continue
-                low_key = key.lower()
-                if 'true' in low_key or 'false' in low_key:
-                    if 'true' in low_key:
+                lower_key = key.lower()
+                if 'true' in lower_key or 'false' in lower_key:
+                    if 'true' in lower_key:
                         itemMeaning[cnt] = key if v.lower() == 'true' else re.sub('true', 'false', key)
                     else:
                         itemMeaning[cnt] = key if v.lower() == 'true' else re.sub('false', 'true', key)
@@ -300,9 +298,10 @@ class DataProcess(object):
 
                 newDict[key][v] = cnt
                 cnt += 1
-        # print('ItemMeaning:', itemMeaning)
-        # for key, value in itemMeaning.items():
-        #     print(key, value)
+
+        print('ItemMeaning:', itemMeaning)
+        for key, value in itemMeaning.items():
+            print(key, value)
         print('Total products in rs: %d ' % len(itemMeaning))
         return newDict, itemMeaning
 

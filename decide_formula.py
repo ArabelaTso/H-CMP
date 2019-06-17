@@ -58,6 +58,15 @@ def extract_formulas(stmt):
             part = re.findall(r'!\s?\((.*?)\)', stmt)
             formulas = re.split(r"\s?&\s?", part[0])
             kmax = len(formulas)
+            #
+            # added_formulas = []
+            # for formula in formulas:
+            #     if re.findall(r'\btrue\b', formula):
+            #         added_formulas.append(re.sub(r'\btrue\b', 'false', formula))
+            #     elif re.findall(r'\bfalse\b', formula):
+            #         added_formulas.append(re.sub(r'\bfalse\b', 'true', formula))
+
+            # formulas.extend(added_formulas)
             print('\natomic formulas: {}\nKmax = {}\n'.format(formulas, kmax))
             return set(formulas), kmax
         else:
@@ -99,25 +108,11 @@ def decide_stmt(protocol_name, atom_formulas, kmax):
                                      max_freq_size=kmax)
     rule_tuple, rule_string_list = learner.execute()
     assert len(rule_tuple) == len(rule_string_list)
-
-    # select candidate invs
-    instantiator = preprocess.RuleLearing(protocol_name, [], {})
-    instan_rule_tuple, _ = instantiator.instantiate(rule_tuple, rule_string_list, all_types)
-    _, candidate_inv_string = protocol_analyser.refine_abstract(instan_rule_tuple, abs_type=abs_type)
-    candidate_inv_string = list(set(candidate_inv_string))
-    candidate_inv_tuple = list(map(lambda x: preprocess.split_string_to_tuple(x), candidate_inv_string))
-    assert len(candidate_inv_string) == len(candidate_inv_tuple)
-    print('select candidate association rules: before: {}, after: {}'.format(len(instan_rule_tuple),
-                                                                             len(candidate_inv_tuple)))
-
-    with open('{}/candidate_rules.txt'.format(protocol_name), 'w') as f:
-        for cnt, stmt in enumerate(sorted(candidate_inv_string, key=lambda x: len(x)), 1):
-            f.write('rule_%d: %s\n' % (cnt, stmt))
-
-    # minimize candidate invs
-    minimzer = preprocess.RuleLearing(protocol_name, [], {})
-    rule_tuple, rule_string_list = minimzer.symmetry_reduction(candidate_inv_tuple, candidate_inv_string,
-                                                               all_types)
+    #
+    # # minimize candidate invs
+    # minimzer = preprocess.RuleLearing(protocol_name, [], {})
+    # rule_tuple, rule_string_list = minimzer.symmetry_reduction(rule_tuple, rule_string_list,
+    #                                                            all_types)
 
     # remove spurious invariants
     selector = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
@@ -138,7 +133,9 @@ def decide_stmt(protocol_name, atom_formulas, kmax):
 
 if __name__ == "__main__":
     protocol_name = 'mutualEx'
-    stmt = '!(n[NODE_1] = C & x = true)'
+    stmt = '!(n[NODE_1] = C & x = true & n[NODE_2] = C)'
+    # stmt = '!(n[1] = C & x = true & n[2] = C)'
+
     # protocol_name = 'german'
     # stmt = '!(Chan2[NODE_1].Cmd = GntE & Chan2[NODE_1].Data = AuxData)'
     formulas, kmax = extract_formulas(stmt)
