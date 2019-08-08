@@ -63,7 +63,7 @@ class DataProcess(object):
                 raise FileExistsError
         dataList, stateDict = self.collect_dataset()
         para_digit = self.para_form(stateDict.keys())
-        dataset, itemMeaning = self.encode(dataList, stateDict)
+        dataset, itemMeaning = self.encode_dataset(dataList, stateDict)
         print('Reachable set: %d' % len(dataset))
 
         if save:
@@ -185,7 +185,7 @@ class DataProcess(object):
         print('Each state has {} variables.'.format(len(dataList[0])))
         print('---------------------\n')
 
-    def encode(self, dataList, stateDict):
+    def encode_dataset(self, dataList, stateDict):
         dataset, itemMeaning = self.tonumber(dataList, stateDict, atom=self.has_atom, neg=False)
 
         return dataset, itemMeaning

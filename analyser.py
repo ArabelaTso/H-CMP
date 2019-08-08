@@ -362,7 +362,7 @@ class Ruleset(object):
         self.guards = set()
         self.atoms = set()
         self.print_info = ""
-        self.used_inv_string_list = []
+        self.used_inv_string_set = set()
 
     def collect_atoms_from_ruleset(self):
         pattern = re.compile(r'ruleset(.*?)do(.*?)endruleset\s*;', re.S)
@@ -417,7 +417,7 @@ class Ruleset(object):
                         f.write('-- Auxiliary invariants used by {}:\n{}\n\n'.format(rulename, '\n'.join(
                             abstracter.used_inv_string_list)))
                 print('-- Auxiliary invariants used by {}: {}'.format(rulename, len(abstracter.used_inv_string_list)))
-                self.used_inv_string_list.extend(abstracter.used_inv_string_list)
+                self.used_inv_string_set |= set(abstracter.used_inv_string_list)
 
     def sparse_rule(self, rule_text, param_name_dict):
         pattern = re.compile(r'rule\s*\"(.*?)\"\s*(.*?)==>.*?begin(.*?)endrule\s*;', re.S)
@@ -772,17 +772,7 @@ class Abstractor(object):
                     # return str(False)
                 # else:
             return stmt
-                    # print('cannot determin {}'.format(stmt))
-            #     if re.findall(r'!=', stmt):
-            #         return str(len(set(map(lambda x: x.strip(' '), re.split(r'!=', stmt)))) != 1)
-            #     # elif re.findall(r':=', stmt):
-            #     #     return stmt
-            #     elif re.findall(r'=', stmt):
-            #         return str(len(set(map(lambda x: x.strip(' '), re.split(r'=', stmt)))) == 1)
-            #     else:
-            #         return stmt
-            # else:
-            #     return stmt
+
 
         print_string = ""
         if action_obj.mainfield.para_dict:
@@ -888,53 +878,4 @@ class Protocol(object):
         typedf = TypeDef(self.text)
         ruleset = Ruleset(self.protocol_name, self.text, typedf.type.keys())
         ruleset.sparse_rulesets(aux_invs, abs_type)
-        return ruleset.print_info, ruleset.used_inv_string_list
-    # paras, consts = self.extract_par()
-    # return paras, self.extract_guards(consts)
-    #
-    # def extract_par(self):
-    #     typedf = TypeDef(self.text)
-    #     typedf.eval_arr()
-    #     if not typedf.para:
-    #         raise ValueError
-    #     # else:
-    #     #     print('Parameter:', ','.join(typedf.para))
-    #     return typedf.para, typedf.const
-    #
-    # def extract_guards(self, consts):
-    #     ruleset = Ruleset(self.text, set())
-    #     guards = ruleset.extract_guards()
-    #     return guards
-    #
-    # def set_paras(self, para, num):
-    #     typedf = TypeDef(self.text)
-    #     self.text = typedf.reset_const(para, num)
-    #     with open('{0}/{0}.m'.format(self.name), 'w') as f:
-    #         f.write(self.text)
-
-#
-# name = "godsont-repAll"
-# fileaname = "godsont-repAll/godsont-repAll.m"
-# abs_filename = "godsont-repAll/ABS_godsont-repAll-autogen.m" #'ABS_%s' % fileaname
-# copyfile(fileaname, abs_filename)
-#
-# auxinv_filename = 'godsont-repAll/min_rule.txt'
-#
-# protocol = Protocol(name, fileaname)
-# # protocol.collect_atoms()
-#
-# aux_invs = []
-# with open(auxinv_filename, 'r') as fr:
-#     content = list(map(lambda x: x.split(': ')[1], filter(lambda x: x, fr.read().split('\n'))))
-#
-# for line in content:
-#     pre = set(line.strip().split(' -> ')[0].split(' & '))
-#     cond = line.strip().split(' -> ')[1]
-#     aux_invs.append((pre, cond))
-# print('read %d auxiliary invariants' % (len(aux_invs)))
-#
-# print_info = protocol.refine_abstract(aux_invs, abs_type='TYPE_NODE')
-#
-# with open(abs_filename, 'a') as fw:
-#     fw.write(print_info)
-#     print(print_info)
+        return ruleset.print_info, list(ruleset.used_inv_string_set)

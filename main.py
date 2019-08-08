@@ -16,7 +16,7 @@ from shutil import copyfile
 
 prefix_msg = '''
 ==========================================================================
-Welcome to L-CMP
+Welcome to H-CMP
 1. Please make sure you have installed CMurphi properly, and 
    write CMurphi's location into murphi_url.txt. 
         E.g. /home/usr/cmurphi5.4.9.1/
@@ -36,7 +36,7 @@ Options:
 	               protocols with a heterogenerous node   -- 3)
 2) Learning process: (default: -f 2, -s -0, -c 1)
 	-l            load the existing auxiliary invariants. 
-	              (if file "aux_invs.txt" in the correspondent folder)
+	              (if file "aux_invs_copy.txt" in the correspondent folder)
 	-f <n>        the size of frequent set
 	-s <n>        the minimun support in association rule learning 
 	-c <n>        the minimun confidence in association rule learning
@@ -120,10 +120,10 @@ if __name__ == "__main__":
             sys.exit()
 
         sys.stderr.write(prefix_msg)
-        #
-        opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:h',
-                                   ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'help'])
-        opts = [('-p', 'mutualEx'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
+
+        # opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:h',
+        #                            ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'help'])
+        opts = [('-p', 'flash2'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
 
         protocol_name, abs_type = '', ''
         NODE_NUM, set_n, min_support, min_config, kmax, num_core, z3 = 2, 3, 0.0, 1.0, 3, multiprocessing.cpu_count(), 0
@@ -330,23 +330,13 @@ if __name__ == "__main__":
                 checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
                 counterex_index = checker.check_usedF(used_inv_string_list, num_core, new_absfile, "-finderrors -ndl")
                 max_cnt += 1
-        # end checking
+            if counterex_index:
+                print('\nCounter-examples:{}\n'.format(counterex_index))
+        else:
+            print('End verifing, no counter-examples')
+
+        # print time record
         time_record.add_time('final-check', '%.2f' % (time.time() - start_time))
         time_record.add_time('total', '%.2f' % (time.time() - total_start))
         time_record.add_time('iter', max_cnt)
         time_record.report()
-
-        # if (not counterex_index) and new_inv_tuple and new_string_list:
-        #     print_info, used_inv_string_list = protocol.refine_abstract(new_inv_tuple, abs_type=abs_type)
-        #     # write to abstract file
-        #     final_absfile = "{0}/final_ABS_{0}.m".format(protocol_name)
-        #     copyfile(fileaname, final_absfile)
-        #     with open(final_absfile, 'a') as fw:
-        #         fw.write(print_info)
-        #     with open("{0}/final_aux_invs.txt".format(protocol_name), 'w') as fw:
-        #         for i, string in enumerate(new_string_list, 1):
-        #             fw.write('rule_{}: {}\n'.format(i, string))
-
-        # check used invariants and abstract protocol
-        # checker = preprocess.SlctInv(protocol_name, [], all_types, home=False)
-        # counterex_index = checker.check_usedF(used_inv_string_list, num_core, abs_filename)

@@ -1,10 +1,13 @@
-n[NODE_1] = C
-n[NODE_1] = T
-n[NODE_1] = I
-n[NODE_1] = E
-n[NODE_2] = C
-n[NODE_2] = T
-n[NODE_2] = I
-n[NODE_2] = E
+n[1] = C 
+n[1] = T 
+n[1] = I 
+n[1] = E 
+n[2] = C 
+n[2] = T 
+n[2] = I
+n[2] = E 
 x = true
 x = false
+
+
+
