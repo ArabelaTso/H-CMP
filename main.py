@@ -121,9 +121,9 @@ if __name__ == "__main__":
 
         sys.stderr.write(prefix_msg)
 
-        # opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:h',
-        #                            ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'help'])
-        opts = [('-p', 'flash2'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
+        opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:h',
+                                   ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'help'])
+        #        opts = [('-p', 'flash2'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
 
         protocol_name, abs_type = '', ''
         NODE_NUM, set_n, min_support, min_config, kmax, num_core, z3 = 2, 3, 0.0, 1.0, 3, multiprocessing.cpu_count(), 0
@@ -173,9 +173,15 @@ if __name__ == "__main__":
         abs_filename = "{0}/ABS_{0}.m".format(protocol_name)
         copyfile(fileaname, abs_filename)
 
+
         # set auxinv_filename
         auxinv_filename = "{0}/aux_invs.txt".format(protocol_name)
         asso_filename = "{0}/assoRules.txt".format(protocol_name)
+        used_aux_invs = '{}/used_aux_invs.txt'.format(protocol_name)
+
+        # empty file to record used aux invs of each trainsitional rule
+        if os.path.exists(used_aux_invs):
+            os.remove(used_aux_invs)
 
         time_record = TimeRecorder(protocol_name)
 
@@ -253,7 +259,8 @@ if __name__ == "__main__":
             # select candidate invs
             instantiator = preprocess.RuleLearing(protocol_name, [], {})
             instan_rule_tuple, _ = instantiator.instantiate(rule_tuple, rule_string_list, all_types)
-            _, candidate_inv_string = protocol.refine_abstract(instan_rule_tuple, abs_type=abs_type)
+            _, candidate_inv_string = protocol.refine_abstract(instan_rule_tuple, abs_type=abs_type,
+                                                               print_usedinvs_to_file=False)
             candidate_inv_string = list(set(candidate_inv_string))
             candidate_inv_tuple = list(map(lambda x: preprocess.split_string_to_tuple(x), candidate_inv_string))
             assert len(candidate_inv_string) == len(candidate_inv_tuple)
@@ -291,7 +298,8 @@ if __name__ == "__main__":
         # refine and abstract
         # start refining and abstracting
         start_time = time.time()
-        print_info, used_inv_string_list = protocol.refine_abstract(aux_invs, abs_type=abs_type)
+        print_info, used_inv_string_list = protocol.refine_abstract(aux_invs, abs_type=abs_type,
+                                                                    print_usedinvs_to_file=True)
         # end removing spurious invariants
         time_record.add_time('strengthening', '%.2f' % (time.time() - start_time))
 
@@ -299,21 +307,24 @@ if __name__ == "__main__":
         with open(abs_filename, 'a') as fw:
             fw.write(print_info)
 
+
         # check used invariants and abstract protocol
         # start checking
         start_time = time.time()
-        max_cnt = 1
-        print('\n\n-----------------\nNo. %d' % max_cnt)
         checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
         counterex_index = checker.check_usedF(used_inv_string_list, num_core, abs_filename, aux_para="-finderrors -ndl")
 
         if counterex_index:
             # if still exists counterexample after strengthening,
             # then iterate until max_cnt or no counterexample
-            max_cnt += 1
+            print('\n\n-----------------\nCounter example founded! Start iteration.\n')
             new_inv_tuple, new_string_list = [], []
+            max_cnt = 1
+
             while counterex_index and max_cnt < 10:
                 print('\n\n-----------------\nNo. %d' % max_cnt)
+                with open(used_aux_invs, 'a') as fw:
+                    fw.write('\n\n-----------------\nNo. %d\n' % max_cnt)
 
                 tmp_string = copy.deepcopy(used_inv_string_list)
                 for cex in counterex_index:
@@ -324,7 +335,8 @@ if __name__ == "__main__":
                 new_absfile = "{0}/ABS_{0}_{1}.m".format(protocol_name, max_cnt)
                 copyfile(fileaname, new_absfile)
 
-                print_info, used_inv_string_list = protocol.refine_abstract(new_inv_tuple, abs_type=abs_type)
+                print_info, used_inv_string_list = protocol.refine_abstract(new_inv_tuple, abs_type=abs_type,
+                                                                            print_usedinvs_to_file=True)
                 with open(new_absfile, 'a') as fw:
                     fw.write(print_info)
                 checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
@@ -332,11 +344,13 @@ if __name__ == "__main__":
                 max_cnt += 1
             if counterex_index:
                 print('\nCounter-examples:{}\n'.format(counterex_index))
+            time_record.add_time('iter', max_cnt)
+
         else:
             print('End verifing, no counter-examples')
+
 
         # print time record
         time_record.add_time('final-check', '%.2f' % (time.time() - start_time))
         time_record.add_time('total', '%.2f' % (time.time() - total_start))
-        time_record.add_time('iter', max_cnt)
         time_record.report()

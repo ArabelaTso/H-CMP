@@ -382,7 +382,7 @@ class Ruleset(object):
         self.atoms |= guard_obj.collect_atoms()
         print('collect atoms from %s' % rule_name)
 
-    def sparse_rulesets(self, aux_invs, abs_type):
+    def sparse_rulesets(self, aux_invs, abs_type,print_usedinvs_to_file=False):
         pattern = re.compile(r'ruleset(.*?)do(.*?)endruleset\s*;', re.S)
         rulesets = pattern.findall(self.text)
 
@@ -397,8 +397,6 @@ class Ruleset(object):
 
                 normalization(guards_obj)
                 normalization(actions_obj)
-                # guards_obj.evaluate()
-                # actions_obj.evaluate()
 
                 # refine guard, return useful_invs
                 refiner = Reiner(rulename, guards_obj, aux_invs)
@@ -410,14 +408,20 @@ class Ruleset(object):
                 abstracter.used_inv_string_list = list(set(abstracter.used_inv_string_list))
 
                 self.print_info += abstracter.print_string
-
-                fout = '{}/used_aux_invs.txt'.format(self.protocol_name)
-                with open(fout, 'a') as f:
-                    if abstracter.used_inv_string_list:
-                        f.write('-- Auxiliary invariants used by {}:\n{}\n\n'.format(rulename, '\n'.join(
-                            abstracter.used_inv_string_list)))
-                print('-- Auxiliary invariants used by {}: {}'.format(rulename, len(abstracter.used_inv_string_list)))
                 self.used_inv_string_set |= set(abstracter.used_inv_string_list)
+        # return abstracter.used_inv_string_list, rulename
+                if print_usedinvs_to_file:
+                        self.write_usedinv_to_file(abstracter.used_inv_string_list, rulename)
+
+
+    def write_usedinv_to_file(self, string_list, rulename):
+        fout = '{}/used_aux_invs.txt'.format(self.protocol_name)
+        with open(fout, 'a') as f:
+            if string_list:
+                f.write('-- Auxiliary invariants used by {}:\n{}\n\n'.format(rulename, '\n'.join(
+                    string_list)))
+        print('-- Auxiliary invariants used by {}: {}'.format(rulename, len(string_list)))
+
 
     def sparse_rule(self, rule_text, param_name_dict):
         pattern = re.compile(r'rule\s*\"(.*?)\"\s*(.*?)==>.*?begin(.*?)endrule\s*;', re.S)
@@ -773,7 +777,6 @@ class Abstractor(object):
                 # else:
             return stmt
 
-
         print_string = ""
         if action_obj.mainfield.para_dict:
             print_string += ('\n\tfor {}'.format('; '.join(
@@ -858,7 +861,6 @@ class Protocol(object):
         self.text = f.read()
         f.close()
 
-
     def show_config(self):
         config = re.findall(r'(\w+)\s*:\s*(\d+)\s*;', self.text)
         for name, num in config:
@@ -874,8 +876,8 @@ class Protocol(object):
         print('Find atomic predicates: %d\n' % (len(ruleset.atoms)))
         return typedf.type
 
-    def refine_abstract(self, aux_invs, abs_type):
+    def refine_abstract(self, aux_invs, abs_type,print_usedinvs_to_file=False):
         typedf = TypeDef(self.text)
         ruleset = Ruleset(self.protocol_name, self.text, typedf.type.keys())
-        ruleset.sparse_rulesets(aux_invs, abs_type)
+        ruleset.sparse_rulesets(aux_invs, abs_type, print_usedinvs_to_file)
         return ruleset.print_info, list(ruleset.used_inv_string_set)
