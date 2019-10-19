@@ -35,7 +35,8 @@ rule "Crit"
       x = true 
 ==>
 begin
-      n[i].st := C; x := false; 
+      n[i].st := C;
+      x := false;
       n[i].data := memDATA; 
 endrule;endruleset;
 
@@ -63,9 +64,7 @@ ruleset i : NODE; data : DATA do rule "Store"
 	n[i].st = C
 ==>
 begin
-      n[i].st := C; 
-      x := false; 
-      auxDATA := data; 
+      auxDATA := data;
       n[i].data := data; 
 endrule;endruleset;    
 
