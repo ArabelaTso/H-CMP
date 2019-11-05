@@ -382,7 +382,7 @@ class Ruleset(object):
         self.atoms |= guard_obj.collect_atoms()
         print('collect atoms from %s' % rule_name)
 
-    def sparse_rulesets(self, aux_invs, abs_type,print_usedinvs_to_file=False):
+    def sparse_rulesets(self, aux_invs, abs_type, boundary_K, print_usedinvs_to_file=False):
         pattern = re.compile(r'ruleset(.*?)do(.*?)endruleset\s*;', re.S)
         rulesets = pattern.findall(self.text)
 
@@ -400,7 +400,7 @@ class Ruleset(object):
 
                 # refine guard, return useful_invs
                 refiner = Reiner(rulename, guards_obj, aux_invs)
-                useful_invs = refiner.find_useful_invs()
+                useful_invs = refiner.find_useful_invs(boundary_K=boundary_K)
 
                 # abstract
                 abstracter = Abstractor(rulename, guards_obj, actions_obj, abs_type, useful_invs, self.type)
@@ -409,10 +409,9 @@ class Ruleset(object):
 
                 self.print_info += abstracter.print_string
                 self.used_inv_string_set |= set(abstracter.used_inv_string_list)
-        # return abstracter.used_inv_string_list, rulename
+                # return abstracter.used_inv_string_list, rulename
                 if print_usedinvs_to_file:
-                        self.write_usedinv_to_file(abstracter.used_inv_string_list, rulename)
-
+                    self.write_usedinv_to_file(abstracter.used_inv_string_list, rulename)
 
     def write_usedinv_to_file(self, string_list, rulename):
         fout = '{}/used_aux_invs.txt'.format(self.protocol_name)
@@ -421,7 +420,6 @@ class Ruleset(object):
                 f.write('-- Auxiliary invariants used by {}:\n{}\n\n'.format(rulename, '\n'.join(
                     string_list)))
         print('-- Auxiliary invariants used by {}: {}'.format(rulename, len(string_list)))
-
 
     def sparse_rule(self, rule_text, param_name_dict):
         pattern = re.compile(r'rule\s*\"(.*?)\"\s*(.*?)==>.*?begin(.*?)endrule\s*;', re.S)
@@ -453,15 +451,24 @@ class Reiner(object):
             used_index.append(self.dict_aux_invs[index])
         return used_index
 
-    def find_useful_invs(self, guard=set()):
+    def find_useful_invs(self, boundary_K, guard=set()):
         if not guard:
             guard = self.guard_obj.normal_guards
             guard = set(guard)
-        iter_cons = self.find_useful_invs_iter(guard)
-        while iter_cons != (self.find_useful_invs_iter(guard | iter_cons)):
-            iter_cons = self.find_useful_invs_iter(guard | iter_cons)
+
+        temp_k = 0
+        iter_cons = set()
+
+        for k in range(boundary_K):
+        # while temp_k < boundary_K:
+            iter_cons |= self.find_useful_invs_iter(guard | iter_cons)
+            print("Strengthening {} time, find {} predicates".format(k+1, len(iter_cons)))
+        # while temp_k <= boundary_K and iter_cons != (self.find_useful_invs_iter(guard | iter_cons)):
+        #     iter_cons = self.find_useful_invs_iter(guard | iter_cons)
         used_invset = self.map_index_to_inv()
         self.evaluate(used_invset)
+
+        # print("Boundary loop K = {}, current loop K = {}. ".format(boundary_K, temp_k))
         return used_invset
 
     def find_useful_invs_iter(self, guard):
@@ -876,8 +883,8 @@ class Protocol(object):
         print('Find atomic predicates: %d\n' % (len(ruleset.atoms)))
         return typedf.type
 
-    def refine_abstract(self, aux_invs, abs_type,print_usedinvs_to_file=False):
+    def refine_abstract(self, aux_invs, abs_type, print_usedinvs_to_file=False, boundary_K=1):
         typedf = TypeDef(self.text)
         ruleset = Ruleset(self.protocol_name, self.text, typedf.type.keys())
-        ruleset.sparse_rulesets(aux_invs, abs_type, print_usedinvs_to_file)
+        ruleset.sparse_rulesets(aux_invs, abs_type, boundary_K, print_usedinvs_to_file)
         return ruleset.print_info, list(ruleset.used_inv_string_set)

@@ -121,12 +121,12 @@ if __name__ == "__main__":
 
         sys.stderr.write(prefix_msg)
 
-        opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:h',
-                                   ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'help'])
+        opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:b:h',
+                                   ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'boundary=', 'help'])
         #        opts = [('-p', 'flash2'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
 
         protocol_name, abs_type = '', ''
-        NODE_NUM, set_n, min_support, min_config, kmax, num_core, z3 = 2, 3, 0.0, 1.0, 3, multiprocessing.cpu_count(), 0
+        NODE_NUM, set_n, min_support, min_config, kmax, num_core, z3, boundary_K = 2, 3, 0.0, 1.0, 3, multiprocessing.cpu_count(), 0, 2
 
         for opt, arg in opts:
             if opt in ('-h', '--help'):
@@ -144,6 +144,8 @@ if __name__ == "__main__":
                 num_core = int(arg)
             elif opt in ('-z', '--z3'):
                 z3 = int(arg)
+            elif opt in ('-b', '--boundary'):
+                boundary_K = int(arg)
             else:
                 print('Wrong input!\n')
                 sys.stderr.write(help_msg)
@@ -162,17 +164,17 @@ if __name__ == "__main__":
         fileaname = "{0}/{0}.m".format(protocol_name)
         print('*' * 50)
         print('Protocol: %s' % protocol_name)
-        print("NODE_NUM={}, set_n={}, min_support={}, min_config={}, kmax={}num_core={}, z3={}".format(NODE_NUM, set_n,
-                                                                                                       min_support,
-                                                                                                       min_config,
-                                                                                                       kmax, num_core,
-                                                                                                       z3))
+        print("NODE_NUM={}, set_n={}, min_support={}, min_config={}, kmax={}num_core={}, z3={}, boundary_K = {}".format(
+            NODE_NUM, set_n,
+            min_support,
+            min_config,
+            kmax, num_core,
+            z3, boundary_K))
         print('*' * 50)
 
         # create abstract protocol file
         abs_filename = "{0}/ABS_{0}.m".format(protocol_name)
         copyfile(fileaname, abs_filename)
-
 
         # set auxinv_filename
         auxinv_filename = "{0}/aux_invs.txt".format(protocol_name)
@@ -236,8 +238,6 @@ if __name__ == "__main__":
                 od['NODE_2'] = 'NODE_1'
                 od['NODE_3'] = 'NODE_2'
                 replace_index = None if NODE_NUM == 2 else od
-                # OrderedDict(
-                # {'NODE_1': 'Home', 'NODE_2': 'NODE_1', 'NODE_3': 'NODE_2'})
                 processor = preprocess.DataProcess(protocol_name, replace_index=replace_index)
                 dataset, itemMeaning, para_digit = processor.execute(load=False)
                 # end preprocessing
@@ -260,7 +260,7 @@ if __name__ == "__main__":
             instantiator = preprocess.RuleLearing(protocol_name, [], {})
             instan_rule_tuple, _ = instantiator.instantiate(rule_tuple, rule_string_list, all_types)
             _, candidate_inv_string = protocol.refine_abstract(instan_rule_tuple, abs_type=abs_type,
-                                                               print_usedinvs_to_file=False)
+                                                               print_usedinvs_to_file=False, boundary_K=1)
             candidate_inv_string = list(set(candidate_inv_string))
             candidate_inv_tuple = list(map(lambda x: preprocess.split_string_to_tuple(x), candidate_inv_string))
             assert len(candidate_inv_string) == len(candidate_inv_tuple)
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         # start refining and abstracting
         start_time = time.time()
         print_info, used_inv_string_list = protocol.refine_abstract(aux_invs, abs_type=abs_type,
-                                                                    print_usedinvs_to_file=True)
+                                                                    print_usedinvs_to_file=True, boundary_K=boundary_K)
         # end removing spurious invariants
         time_record.add_time('strengthening', '%.2f' % (time.time() - start_time))
 
@@ -307,12 +307,12 @@ if __name__ == "__main__":
         with open(abs_filename, 'a') as fw:
             fw.write(print_info)
 
-
         # check used invariants and abstract protocol
         # start checking
         start_time = time.time()
         checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
-        counterex_index = checker.check_usedF(used_inv_string_list, num_core, abs_filename, aux_para="-finderrors -ndl")
+        counterex_index = checker.check_usedF(used_inv_string_list, num_core, abs_filename, aux_para="-finderrors -ndl",
+                                              keep_file=True)
 
         if counterex_index:
             # if still exists counterexample after strengthening,
@@ -336,11 +336,12 @@ if __name__ == "__main__":
                 copyfile(fileaname, new_absfile)
 
                 print_info, used_inv_string_list = protocol.refine_abstract(new_inv_tuple, abs_type=abs_type,
-                                                                            print_usedinvs_to_file=True)
+                                                                            print_usedinvs_to_file=True, boundary_K=1)
                 with open(new_absfile, 'a') as fw:
                     fw.write(print_info)
                 checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
-                counterex_index = checker.check_usedF(used_inv_string_list, num_core, new_absfile, "-finderrors -ndl")
+                counterex_index = checker.check_usedF(used_inv_string_list, num_core, new_absfile, "-finderrors -ndl",
+                                                      keep_file=True)
                 max_cnt += 1
             if counterex_index:
                 print('\nCounter-examples:{}\n'.format(counterex_index))
@@ -348,7 +349,6 @@ if __name__ == "__main__":
 
         else:
             print('End verifing, no counter-examples')
-
 
         # print time record
         time_record.add_time('final-check', '%.2f' % (time.time() - start_time))

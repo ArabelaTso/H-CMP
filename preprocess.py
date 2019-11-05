@@ -4,9 +4,8 @@
 import os
 import re
 import sys
-import pty
+import getopt
 import time
-import copy
 import subprocess
 import collections
 import pandas as pd
@@ -513,68 +512,6 @@ class RuleLearing(object):
 
         return sym_expan_rule_tuple, sym_expan_rule_string
 
-    # def check_sym(self, all_types, rule_tuple):
-    #     print('Checking symmetry rules..')
-    #
-    #     sortedRuleTuple = sorted(rule_tuple, key=lambda x: len(x[0]), reverse=True)
-    #     without_type, with_type_1, with_type_2 = [], [], []
-    #     rest_rule_tuple, rule_need_test = [], []
-    #     # classify rules
-    #     for pre, cond in sortedRuleTuple:
-    #         for t in all_types:
-    #             if len(list(filter(lambda x: re.findall(r'%s\_\d' % t, x), pre))) == 0 and not re.findall(r'%s\_\d' % t,
-    #                                                                                                       cond):
-    #                 without_type.append((pre, cond))
-    #             elif len(pre) == 1:
-    #                 with_type_1.append((pre, cond))
-    #             elif len(pre) == 2:
-    #                 with_type_2.append((pre, cond))
-    #
-    #     print('Rule without type parameters: %d\nRule with parameters: %d' % (
-    #         len(without_type), len(with_type_1) + len(with_type_2)))
-    #
-    #     for pre, cond in with_type_1:
-    #         stmt = list(pre)
-    #         stmt.append(cond)
-    #         stmt = ','.join(sorted(stmt))
-    #         for t in all_types:
-    #             tmp_stmt = stmt
-    #             if '%s_1' % t in tmp_stmt:
-    #                 tmp_stmt = re.sub('%s_1' % t, '%s_2' % t, tmp_stmt)
-    #                 tmp_stmt_split = split_back(tmp_stmt)
-    #                 if tmp_stmt_split in with_type_1:
-    #                     rest_rule_tuple.append(tmp_stmt_split)
-    #                 else:
-    #                     rule_need_test.append(tmp_stmt)
-    #             if '%s_2' % t in tmp_stmt:
-    #                 tmp_stmt = re.sub(r'%s_2' % t, '%s_1' % t, tmp_stmt)
-    #                 tmp_stmt_split = split_back(tmp_stmt)
-    #                 if tmp_stmt_split in with_type_1:
-    #                     rest_rule_tuple.append(tmp_stmt_split)
-    #                 else:
-    #                     rule_need_test.append(tmp_stmt)
-    #
-    #     for pre, cond in with_type_2:
-    #         stmt = list(pre)
-    #         stmt.append(cond)
-    #         stmt = ','.join(sorted(stmt))
-    #         for t in all_types:
-    #             tmp_stmt = stmt
-    #             if '%s\_1' % t in tmp_stmt:
-    #                 tmp_stmt = re.sub(r'%s\_1' % t, '%s_2' % t, tmp_stmt)
-    #                 tmp_stmt_split = split_back(tmp_stmt)
-    #                 if tmp_stmt_split in with_type_2:
-    #                     rest_rule_tuple.append(tmp_stmt_split)
-    #             if '%s\_2' % t in tmp_stmt:
-    #                 tmp_stmt = re.sub(r'%s\_2' % t, '%s_1' % t, tmp_stmt)
-    #                 tmp_stmt_split = split_back(tmp_stmt)
-    #                 if tmp_stmt_split in with_type_2:
-    #                     rest_rule_tuple.append(tmp_stmt_split)
-    #
-    #     rest_rule_tuple.extend(without_type)
-    #
-    #     return rest_rule_tuple
-
     def minimize_rule(self, rest_rule_tuple):
         print('Minimizing rules..')
         fout = '%s/min_rule.txt' % self.protocol_name
@@ -791,148 +728,6 @@ class RuleLearing(object):
 
         return rule_tuple, rule_string_list
 
-    # def para_rules(self, para_digit, save=True):
-    #     """
-    #     parameterize association rules:
-    #     1. parameterize: paralized line, subsitute parameters into P1,P2,... in original order
-    #         i.e., n[NODE_1] = NODE_2 --> n[P1] = P2
-    #               n[NODE_2] = NODE_1 --> n[P1] = P2
-    #
-    #     2. remove repeated: predicates that before and after '->' have the same variable name
-    #         v1 = e1 -> v1 != e2
-    #         or
-    #         v1 = e1 & v2 = e3 -> v1 != e2
-    #        will be removed
-    #     """
-    #
-    #     left, right = [], []
-    #     para_rules, rules = set(), set()
-    #
-    #     def paralize(line, par):
-    #         """
-    #         paralized line, subsitute parameters into P1,P2,... in original order
-    #         i.e., n[NODE_1] = NODE_2 --> n[P1] = P2
-    #               n[NODE_2] = NODE_1 --> n[P1] = P2
-    #         :param line:
-    #         :param par:
-    #         :return: paralized line, without changing the original parameters such as 'NODE_1', 'NODE_2'
-    #         """
-    #
-    #         search_para = re.search(r'\[\d\]', line) if para_digit else re.search(r'\[%s\_\d\]' % par, line)
-    #
-    #         cnt = 1
-    #         while search_para:
-    #             para_code = self.para_map[par]
-    #             line = line.replace(search_para.group(), '[%s%d]' % (para_code, cnt))
-    #             search_para = re.search(r'\[\d\]', line) if para_digit else re.search(r'\[%s\_\d\]' % par, line)
-    #             cnt += 1
-    #         return line
-    #
-    #     for ant, conse in zip(self.antecedants, self.consequents):
-    #         # if len(conse) <= 1:
-    #         line = "{} -> {}".format(' & '.join(sorted(ant)), conse)
-    #         for par in self.params:
-    #             paralized_line = paralize(line, par)
-    #             # paralized_line = line
-    #             if paralized_line in para_rules:
-    #                 # para_rules.remove(paralized_line)
-    #                 continue
-    #             else:
-    #                 para_rules.add(paralized_line)
-    #
-    #                 # extract variable names and remove the rule which has same variable in both sides of '='
-    #                 left_var, right_var = set([a.split(' ')[0] for a in ant]), set([conse.split(' ')[0]])
-    #
-    #                 if left_var.issubset(right_var) or right_var.issubset(
-    #                         left_var):  # or not re.search('[\[\]]', ''.join(left_var)):
-    #                     para_rules.remove(paralized_line)
-    #                     continue
-    #                 else:
-    #                     left.append(sorted([a for a in ant]))
-    #                     right.append(conse)
-    #                     rules.add("{} -> {}".format(' & '.join(sorted(ant)), conse))
-    #
-    #     assert (len(left) == len(right))
-    #
-    #     print('Parametrized rules: %d ' % len(left))
-    #
-    #     with open('%s/assoRule_min.txt' % self.name, 'w') as fw:
-    #         for i, pr in enumerate(para_rules, 1):
-    #             fw.write('rule_%d: %s\n' % (i, pr))
-    #             print('rule_%d: %s\n' % (i, pr))
-    #
-    #     if save:
-    #         f_left = '%s/data/left.pkl' % self.name
-    #         f_right = '%s/data/right.pkl' % self.name
-    #
-    #         joblib.dump(left, f_left)
-    #         joblib.dump(right, f_right)
-    #
-    #     return para_rules
-
-    # def instantiate(self, para_line, paras=['NODE_1', 'NODE_2']):
-    #     """
-    #     instantiate association rules.
-    #     E.g. n[P1] -> P2  will be instantiated into :
-    #          n[i] -> j
-    #     and  n[j] -> i
-    #     :param para_line:
-    #     :return:
-    #     """
-    #     # paras = ['NODE_1', 'NODE_2']
-    #     fname = '{0}/aux_invs.txt'.format(self.name)
-    #     ins_lines = []
-    #     left, right = [], []
-    #     for line in para_line:
-    #         for index in range(len(paras)):
-    #             temp = line
-    #             for par in self.params:
-    #                 para_code = self.para_map[par]
-    #                 search_para = re.search(r'%s\d' % para_code, temp)
-    #
-    #                 while search_para:
-    #                     temp = re.sub(search_para.group(), paras[index], temp)
-    #                     search_para = re.search(r'%s\d' % para_code, temp)
-    #                     index ^= 1
-    #                 ins_lines.append(temp)
-    #                 left.append([a for a in sorted(temp.split(' -> ')[0].split(' & '))])
-    #                 right.append(temp.split(' -> ')[1])
-    #
-    #     with open(fname, 'w') as f:
-    #         for cnt, line in enumerate(ins_lines, 1):
-    #             f.write('rule_%d:   %s\n' % (cnt, line))
-    #
-    #     print('instantiated rules: %d ' % len(ins_lines))
-    #     self.antecedants, self.consequents = left, right
-    #     return ins_lines
-    #
-
-    #
-    # def built_map(self):
-    #     """
-    #     build a rule map using antecendents:
-    #
-    #     e.g. n[NODE_1] = C -> n[NODE_2] != C
-    #     build a rule map:
-    #     {n[NODE]: n[NODE_1] = C -> n[NODE_2] != C}
-    #
-    #     :return:
-    #     """
-    #
-    #     rules_map = collections.defaultdict(lambda: collections.defaultdict(set))
-    #     par = self.params[0]
-    #
-    #     for left, right in zip(self.antecedants, self.consequents):
-    #         # key = ','.join(sorted(left))
-    #         # for par in self.params:
-    #         #     key = lambda x : re.sub(r'%s\_\d' % par, par, x)
-    #
-    #         key = frozenset(map(lambda x: re.sub(r'%s\_\d' % par, par, x), left))
-    #         # key = frozenset(map(lambda x: re.sub(r'\d', par, x), left))
-    #
-    #         rules_map[key][frozenset(left)].add(right)
-    #     return rules_map
-
     def slct_rules_by_guards(self, rules_map, guards, par, save=True, load=False):
         if load and os.path.exists("{}/data/norm_rule_dict.pkl".format(self.name)) and os.path.exists(
                 "{}/data/rules.pkl".format(self.name)):
@@ -993,7 +788,8 @@ class SlctInv(object):
     # def update_test_rules(self, new_set):
     #     self.test_rules = {'rule_%d' % i: rule for i, rule in enumerate(new_set, 1)}
 
-    def select_invariant(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None, aux_para=""):
+    def select_invariant(self, test_rule_string, keep_file, num_core=multiprocessing.cpu_count(), original_file=None,
+                         aux_para=""):
         print('\nchecking invariants...')
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
 
@@ -1012,7 +808,7 @@ class SlctInv(object):
         spurious_index = []
         with multiprocessing.Pool(num_core) as p:
             spurious_index.extend(p.starmap(self.parallel,
-                                            [(index_range, pid, translate_dic, original_file, aux_para) for
+                                            [(index_range, pid, translate_dic, original_file, keep_file, aux_para) for
                                              pid, index_range
                                              in enumerate(jobs, 1)]))
 
@@ -1031,7 +827,7 @@ class SlctInv(object):
     def run_murphi(self, file, aux_para=''):
         file = file.split('.')[0]
         print('compile murphi to cpp....')
-        process1 = subprocess.Popen("{0}/src/mu {1}.m".format(self.murphi_dir, file), shell=True,
+        process1 = subprocess.Popen("{0}src/mu {1}.m".format(self.murphi_dir, file), shell=True,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
 
@@ -1043,7 +839,7 @@ class SlctInv(object):
             print('Code generated')
 
         print('compile cpp to executive file....')
-        command2 = "g++ -ggdb -o {0}.o {0}.cpp -I {1}/include -lm".format(file, self.murphi_dir)
+        command2 = "g++ -ggdb -o {0}.o {0}.cpp -I {1}include -lm".format(file, self.murphi_dir)
         process2 = subprocess.Popen(command2, shell=True,
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -1079,7 +875,7 @@ class SlctInv(object):
                 {key: '\n\nInvariant \"%s\"\n' % key + self.to_murphi(rule)})
         return translate_dic
 
-    def parallel(self, index_range, id, translate_dic, original_file, aux_para=""):
+    def parallel(self, index_range, id, translate_dic, original_file, keep_file, aux_para=""):
         start, end = index_range
         counters = []
         new_file = "{}_{}.m".format(original_file.split('.')[0], id)
@@ -1105,7 +901,8 @@ class SlctInv(object):
             # fw.writelines(new_content)
             # counter_ex_list = self.run_murphi(new_file)
 
-        os.remove("{}.m".format(new_file.split('.')[0]))
+        if not keep_file:
+            os.remove("{}.m".format(new_file.split('.')[0]))
         # os.remove("{}.cpp".format(new_file.split('.')[0]))
         # os.remove("{}.o".format(new_file.split('.')[0]))
         print(counters)
@@ -1151,10 +948,12 @@ class SlctInv(object):
 
         return murphi_string
 
-    def check_usedF(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None, aux_para=""):
+    def check_usedF(self, test_rule_string, num_core=multiprocessing.cpu_count(), original_file=None, aux_para="",
+                    keep_file=False):
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
         print('checking %s' % original_file)
-        spurious_cnt, counterex_index = self.select_invariant(test_rule_string, num_core, original_file, aux_para)
+        spurious_cnt, counterex_index = self.select_invariant(test_rule_string, keep_file=keep_file, num_core=num_core,
+                                                              original_file=original_file, aux_para=aux_para)
         print('counterex_index', counterex_index)
         if not spurious_cnt:
             print('usedF all passed!')
