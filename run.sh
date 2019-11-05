@@ -1,0 +1,1 @@
+python3 main.py -p mutdata -a NODE -n 2 -c 1 -k 3 -b 2
