@@ -94,6 +94,12 @@
 
 ## 使用方式
 
+### Run shell file
+
+这个方法可以在linux/Mac OS上运行，windows用户参见下面【完整过程】
+
+直接运行 `run.sh` 
+
 ### 完整过程
 
 #### 预设
@@ -103,8 +109,20 @@
 #### 输入
 
 ```shell
-python3 main.py -p mutualEx -a NODE -n 2
+python3 main.py -p mutdata -a NODE -n 2
 ```
+
+#### 参数
+
+- Compulsory parameters:
+  - `-p`: (string) Protocol name
+  - `-a`: (string) The name of object under abstract (default: "NODE")
+  - `-n`: (integer) The number of homogenous node (default: 2)
+- Optional parameters:
+  - `-k`: (integer) The size of frequent item set (default: 3)
+  - `-c`: (integer) The number of cores (default: cpu_count())
+  - `-b`: (integer) The number of strengthening (default: 2)
+  - `-h`: (NONE) Print out help document.
 
 #### 输出
 
