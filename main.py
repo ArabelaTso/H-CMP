@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
         opts, args = getopt.getopt(sys.argv[1:], 'p:a:n:c:k:z:b:h',
                                    ['protocol=', 'abs_type=', 'node=', 'core=', 'kmax=', 'z3=', 'boundary=', 'help'])
-        #        opts = [('-p', 'flash2'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
+        # opts = [('-p', 'mutdata'), ('-a', 'NODE'), ('-c', 1), ('-k', 3), ('-n', 2), ('-z', 1)]
 
         protocol_name, abs_type = '', ''
         NODE_NUM, set_n, min_support, min_config, kmax, num_core, z3, boundary_K = 2, 3, 0.0, 1.0, 3, multiprocessing.cpu_count(), 0, 2
@@ -279,8 +279,8 @@ if __name__ == "__main__":
             # start removing spurious invariants
             start_time = time.time()
             selector = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
-            _, counterex_index = selector.select_invariant(rule_string_list, num_core,
-                                                           '{0}/{0}.m'.format(protocol_name),
+            _, counterex_index = selector.select_invariant(rule_string_list, keep_file=False, num_core=num_core,
+                                                           original_file='{0}/{0}.m'.format(protocol_name),
                                                            aux_para="-finderrors -ndl")
             # end removing spurious invariants
             time_record.add_time('auxiliary', '%.2f' % (time.time() - start_time))
@@ -311,7 +311,8 @@ if __name__ == "__main__":
         # start checking
         start_time = time.time()
         checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
-        counterex_index = checker.check_usedF(used_inv_string_list, num_core, abs_filename, aux_para="-finderrors -ndl",
+        counterex_index = checker.check_usedF(used_inv_string_list, num_core, abs_filename,
+                                              aux_para="-finderrors -ndl -m100",
                                               keep_file=True)
 
         if counterex_index:
@@ -340,7 +341,8 @@ if __name__ == "__main__":
                 with open(new_absfile, 'a') as fw:
                     fw.write(print_info)
                 checker = preprocess.SlctInv(protocol_name, [], all_types, home=home_flag)
-                counterex_index = checker.check_usedF(used_inv_string_list, num_core, new_absfile, "-finderrors -ndl",
+                counterex_index = checker.check_usedF(used_inv_string_list, num_core, new_absfile,
+                                                      "-finderrors -ndl -m100",
                                                       keep_file=True)
                 max_cnt += 1
             if counterex_index:

@@ -728,16 +728,17 @@ class Abstractor(object):
     def print_guard(self, guard_obj):
         # print('\nenter print_guard')
         def judge(stmt):
-            if re.findall('Other', stmt):
-                # print(stmt)
-                if re.findall(r'!=', stmt):
-                    return str(len(set(map(lambda x: x.strip(' '), re.split(r'!=', stmt)))) != 1)
-                elif re.findall(r'=', stmt):
-                    return str(len(set(map(lambda x: x.strip(' '), re.split(r'=', stmt)))) == 1)
-                else:
-                    return stmt
-            else:
-                return stmt
+            return stmt
+            # if re.findall('Other', stmt):
+            #     # print(stmt)
+            #     if re.findall(r'!=', stmt):
+            #         return str(len(set(map(lambda x: x.strip(' '), re.split(r'!=', stmt)))) != 1)
+            #     elif re.findall(r'=', stmt):
+            #         return str(len(set(map(lambda x: x.strip(' '), re.split(r'=', stmt)))) == 1)
+            #     else:
+            #         return stmt
+            # else:
+            #     return stmt
 
         print_string = ""
 

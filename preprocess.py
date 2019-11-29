@@ -516,10 +516,6 @@ class RuleLearing(object):
         print('Minimizing rules..')
         fout = '%s/min_rule.txt' % self.protocol_name
         rest_rule_tuple = sorted(rest_rule_tuple, key=lambda x: len(x[0]))
-        # rules = list(map(lambda line: line.split(' -> '), sorted(rest_rule_tuple, key=lambda x: len(x))))
-        # print('min rules % d' % len(rules))
-        # joblib.dump(rules, '%s/data/min_asso.pkl' % self.protocol_name)
-        # rules = joblib.load('mutualEx/data/min_asso.pkl')
 
         left, right = [], []
         for pre, cond in rest_rule_tuple:
@@ -801,20 +797,24 @@ class SlctInv(object):
             num_core = num_core
         else:
             num_core = min(num_core, n // 100)
-
+        print('num core = {}, type = {}'.format(num_core, type(num_core)))
         jobs = [(i * n // num_core, (i + 1) * n // num_core) for i in range(num_core)]
 
         print('ranges', jobs)
         spurious_index = []
-        with multiprocessing.Pool(num_core) as p:
-            spurious_index.extend(p.starmap(self.parallel,
-                                            [(index_range, pid, translate_dic, original_file, keep_file, aux_para) for
-                                             pid, index_range
-                                             in enumerate(jobs, 1)]))
+        try:
+            with multiprocessing.Pool(num_core) as p:
+                spurious_index.extend(p.starmap(self.parallel,
+                                                [(index_range, pid, translate_dic, original_file, keep_file, aux_para)
+                                                 for
+                                                 pid, index_range
+                                                 in enumerate(jobs, 1)]))
 
-        spurious_index = list(set(k for key in spurious_index for k in key))
-        self.counterex_index = spurious_index
-        # print(self.counterex_index)
+            spurious_index = list(set(k for key in spurious_index for k in key))
+            self.counterex_index = spurious_index
+            # print(self.counterex_index)
+        except:
+            print('[ERROR!!!] Run Murphi failed!')
 
         print('original rule: {}, remove {}, remain {}'.format(n, len(spurious_index), n - len(spurious_index)))
         self.counterex_index = list(map(lambda x: int(''.join(re.findall('\_(\d*)', x))) - 1, self.counterex_index))
