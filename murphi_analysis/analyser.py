@@ -355,7 +355,8 @@ class Action(object):
 
 
 class Ruleset(object):
-    def __init__(self, protocol_name, text, type):
+    def __init__(self, data_dir, protocol_name, text, type):
+        self.data_dir = data_dir
         self.protocol_name = protocol_name
         self.text = text
         self.type = type
@@ -414,7 +415,8 @@ class Ruleset(object):
                     self.write_usedinv_to_file(abstracter.used_inv_string_list, rulename)
 
     def write_usedinv_to_file(self, string_list, rulename):
-        fout = '{}/used_aux_invs.txt'.format(self.protocol_name)
+        fout = '{}/{}/used_aux_invs.txt'.format(self.data_dir, self.protocol_name)
+
         with open(fout, 'a') as f:
             if string_list:
                 f.write('-- Auxiliary invariants used by {}:\n{}\n\n'.format(rulename, '\n'.join(
@@ -460,9 +462,9 @@ class Reiner(object):
         iter_cons = set()
 
         for k in range(boundary_K):
-        # while temp_k < boundary_K:
+            # while temp_k < boundary_K:
             iter_cons |= self.find_useful_invs_iter(guard | iter_cons)
-            print("Strengthening {} time, find {} predicates".format(k+1, len(iter_cons)))
+            print("Strengthening {} time, find {} predicates".format(k + 1, len(iter_cons)))
         # while temp_k <= boundary_K and iter_cons != (self.find_useful_invs_iter(guard | iter_cons)):
         #     iter_cons = self.find_useful_invs_iter(guard | iter_cons)
         used_invset = self.map_index_to_inv()
@@ -765,24 +767,24 @@ class Abstractor(object):
 
     def print_action(self, action_obj):
         def judge(stmt):
-            if re.findall('Other', stmt):
-                if re.findall(r'Other\s?=\s?Other', stmt):
-                    stmt = re.sub(r'Other\s?=\s?Other', 'true', stmt)
-                    # return str(True)
-                elif re.findall(r'Other\s?!=\s?Other', stmt):
-                    stmt = re.sub(r'Other\s?!=\s?Other', 'false', stmt)
-                    # return str(False)
-                elif re.findall(r'Other\s?!=\s?(\w+)', stmt):
-                    stmt = re.sub(r'Other\s?!=\s?(\w+)', 'true', stmt)
-                    # return str(True)
-                elif re.findall(r'(\w+)\s?!=\s?Other', stmt):
-                    stmt = re.sub(r'(\w+)\s?!=\s?Other', 'true', stmt)
-                elif re.findall(r'Other\s?=\s?(\w+)', stmt):
-                    stmt = re.sub(r'Other\s?=\s?(\w+)', 'false', stmt)
-                elif re.findall(r'(\w+)\s?=\s?Other', stmt):
-                    stmt = re.sub(r'(\w+)\s?=\s?Other', 'false', stmt)
-                    # return str(False)
-                # else:
+            # if re.findall('Other', stmt):
+            #     if re.findall(r'Other\s?=\s?Other', stmt):
+            #         stmt = re.sub(r'Other\s?=\s?Other', 'true', stmt)
+            #         # return str(True)
+            #     elif re.findall(r'Other\s?!=\s?Other', stmt):
+            #         stmt = re.sub(r'Other\s?!=\s?Other', 'false', stmt)
+            #         # return str(False)
+            #     elif re.findall(r'Other\s?!=\s?(\w+)', stmt):
+            #         stmt = re.sub(r'Other\s?!=\s?(\w+)', 'true', stmt)
+            #         # return str(True)
+            #     elif re.findall(r'(\w+)\s?!=\s?Other', stmt):
+            #         stmt = re.sub(r'(\w+)\s?!=\s?Other', 'true', stmt)
+            #     elif re.findall(r'Other\s?=\s?(\w+)', stmt):
+            #         stmt = re.sub(r'Other\s?=\s?(\w+)', 'false', stmt)
+            #     elif re.findall(r'(\w+)\s?=\s?Other', stmt):
+            #         stmt = re.sub(r'(\w+)\s?=\s?Other', 'false', stmt)
+            #         # return str(False)
+            #     # else:
             return stmt
 
         print_string = ""
@@ -863,9 +865,10 @@ def analyzeParams(params):
 
 
 class Protocol(object):
-    def __init__(self, protocol_name, filename):
+    def __init__(self, data_dir, protocol_name, file_url):
+        self.data_dir = data_dir
         self.protocol_name = protocol_name
-        f = open(filename, 'r')
+        f = open(file_url, 'r')
         self.text = f.read()
         f.close()
 
@@ -877,15 +880,15 @@ class Protocol(object):
     def collect_atoms(self):
         typedf = TypeDef(self.text)
         # print('typedef', typedf.const, typedf.para, typedf.type)
-        ruleset = Ruleset(self.protocol_name, self.text, typedf.para)
+        ruleset = Ruleset(self.data_dir, self.protocol_name, self.text, typedf.para)
         ruleset.collect_atoms_from_ruleset()
-        with open('{}/collected_atom.txt'.format(self.protocol_name), 'w') as f:
+        with open('{}/{}/collected_atom.txt'.format(self.data_dir, self.protocol_name), 'w') as f:
             f.write('\n'.join(ruleset.atoms))
         print('Find atomic predicates: %d\n' % (len(ruleset.atoms)))
         return typedf.type
 
     def refine_abstract(self, aux_invs, abs_type, print_usedinvs_to_file=False, boundary_K=1):
         typedf = TypeDef(self.text)
-        ruleset = Ruleset(self.protocol_name, self.text, typedf.type.keys())
+        ruleset = Ruleset(self.data_dir, self.protocol_name, self.text, typedf.type.keys())
         ruleset.sparse_rulesets(aux_invs, abs_type, boundary_K, print_usedinvs_to_file)
         return ruleset.print_info, list(ruleset.used_inv_string_set)
