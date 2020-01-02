@@ -1,23 +1,29 @@
 
-********************
-rule Try:
-rule used for replace: []
-NoAbstractRule
-********************
-rule Crit:
-rule used for replace: []
-abstract node: [i],
-aux_invs: 
-[rule_1,rule_6,rule_38,rule_40,rule_12,rule_16,rule_19,rule_27,rule_30]
-********************
-rule Exit:
-rule used for replace: []
-NoAbstractRule
-********************
-rule Idle:
-rule used for replace: []
-abstract node: [i],
-aux_invs: 
-[rule_9,rule_3,rule_39]
 
-output file in "./protocols/mutualEx/ABS_mutualEx.m"
+n_Try:
+[i], NoAbstractRule
+
+n_Crit:
+[i],abs_rule_name
+[n_rule_800,n_rule_762,n_rule_681,n_rule_809,n_rule_174,n_rule_655,n_rule_854,n_rule_410,n_rule_765],[]
+
+n_Exit:
+[i], NoAbstractRule
+
+n_Idle:
+[i],abs_rule_name
+[n_rule_704,n_rule_908,n_rule_692],[]
+
+n_Try:
+[i], NoAbstractRule
+
+n_Crit:
+[i],abs_rule_name
+[n_rule_35,n_rule_5,n_rule_6,n_rule_37,n_rule_9,n_rule_19,n_rule_24,n_rule_27,n_rule_31],[]
+
+n_Exit:
+[i], NoAbstractRule
+
+n_Idle:
+[i],abs_rule_name
+[n_rule_11,n_rule_21,n_rule_38],[]

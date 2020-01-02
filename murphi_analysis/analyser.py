@@ -664,7 +664,7 @@ class Abstractor(object):
             #     ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
             #                  self.used_inv_string_list))))
             open(self.logfile, 'a').write(
-                '[{}],abs_rule_name'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
+                '[{}],{}'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
 
             open(self.logfile, 'a').write('\n[{}],'.format(
                 ','.join(map(lambda x: 'n_rule_{}'.format(self.dict_inv2index[x]),
@@ -719,7 +719,6 @@ class Abstractor(object):
 
             # print_string += '\nrule \"ABS_%s_%s\"\n' % (self.rulename, prefix)
             print_string += '\nrule \"{}\"\n'.format(abs_rulename)
-
 
             guard_string = self.print_guard(
                 pop_key_from_field_list(abs_guard_obj, set(abs_para_list) | set(main_list)))
