@@ -2,6 +2,7 @@ import os
 import sys
 import copy
 import argparse
+import joblib
 from shutil import copyfile
 from collections import OrderedDict
 from murphi_analysis.call_murphi import run_murphi
@@ -30,10 +31,7 @@ def pre(data_dir, protocol_name, node_num, murphi_url):
     dataset, itemMeaning, para_digit = processor.execute(load=True)
     global_vars = processor.select_global(itemMeaning)
 
-    prot_analyzer = Protocol(data_dir, protocol_name, '{0}/{1}/{1}.m'.format(data_dir, protocol_name))
-    all_types = prot_analyzer.collect_atoms()
-
-    return dataset, itemMeaning, global_vars, all_types
+    return dataset, itemMeaning, global_vars
 
 
 def learn(data_dir, protocol_name, dataset, itemMeaning, global_vars, kmax):
@@ -47,11 +45,14 @@ def learn(data_dir, protocol_name, dataset, itemMeaning, global_vars, kmax):
 def select(data_dir, protocol_name, abs_type, home_flag, num_core, rule_tuple, rule_string_list, prot_analyzer,
            all_types=None):
     # prot_analyzer = Protocol(data_dir, protocol_name, '{0}/{1}/{1}.m'.format(data_dir, protocol_name))
+
     if all_types is None:
         all_types = prot_analyzer.collect_atoms()
 
     instantiator = RuleLearing(data_dir, protocol_name, [], {})
     instan_rule_tuple, _ = instantiator.instantiate(rule_tuple, rule_string_list, all_types)
+    print('type of aux_inv = {}'.format(type(instan_rule_tuple)))
+
     _, candidate_inv_string = prot_analyzer.refine_abstract(instan_rule_tuple, abs_type=abs_type,
                                                             print_usedinvs_to_file=False, boundary_K=1)
     candidate_inv_string = list(set(candidate_inv_string))
@@ -93,6 +94,8 @@ def cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer):
     print_info, used_inv_string_list = prot_analyzer.refine_abstract(aux_invs, abs_type=args.abs_obj,
                                                                      print_usedinvs_to_file=True,
                                                                      boundary_K=args.kmax)
+
+    open(prot_analyzer.logfile, 'a').write('\n\noutput file in \"{}\"'.format(abs_filename))
     with open(abs_filename, 'a') as fw:
         fw.write(print_info)
 
@@ -106,22 +109,19 @@ def cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer):
 def iter_cmp(data_dir, args, all_types=None, aux_invs=None, abs_filename=None, prot_analyzer=None, max_cnt=10):
     home_flag = False if args.node_num < 3 else True
 
-    prot_dir = '{}/{}.m'.format(data_dir, args.protocol)
+    prot_dir = '{0}/{1}/{1}.m'.format(data_dir, args.protocol)
     counterex_index, used_inv_string_list = cmp(data_dir, args, all_types, aux_invs,
                                                 abs_filename,
                                                 prot_analyzer)
     if counterex_index:
-        # if still exists counterexample after strengthening,
-        # then iterate until max_cnt or no counterexample
+        '''
+        if still exists counterexample after strengthening,
+        then iterate until max_cnt or no counterexample
+        '''
         print('\n\n-----------------\nCounter example founded! Start iteration.\n')
-        new_inv_tuple, new_string_list = [], []
         cnt = 1
 
         while counterex_index and cnt < max_cnt:
-            # print('\n\n-----------------\nNo. %d' % max_cnt)
-            # with open(used_aux_invs, 'a') as fw:
-            #     fw.write('\n\n-----------------\nNo. %d\n' % max_cnt)
-
             tmp_string = copy.deepcopy(used_inv_string_list)
             for cex in counterex_index:
                 tmp_string.remove(used_inv_string_list[cex])
@@ -146,21 +146,38 @@ def iter_cmp(data_dir, args, all_types=None, aux_invs=None, abs_filename=None, p
         print('End verifing, no counter-examples')
 
 
-def all(data_dir, args, murphi_url, max_cnt=10, end_with='all', abs_filename=None):
+def all(data_dir, args, murphi_url, max_cnt=10, end_with='all', abs_filename=None, recalculate=False):
     home_flag = False if args.node_num < 3 else True
     print('{}\nPreprocessing'.format('*' * 30))
-    dataset, itemMeaning, global_vars, all_types = pre(data_dir, args.protocol, args.node_num, murphi_url)
-    if end_with == 'pre': return
 
-    print('{}\nLearning'.format('*' * 3))
-    rule_tuple, rule_string_list = learn(data_dir, args.protocol, dataset, itemMeaning, global_vars, args.kmax)
-    if end_with == 'learn': return
-
-    print('{}\nSelecting'.format('*' * 30))
     prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol))
-    aux_invs, aux_inv_string = select(data_dir, args.protocol, args.abs_obj, home_flag, 1, rule_tuple,
-                                      rule_string_list, prot_analyzer, all_types)
+    all_types = prot_analyzer.collect_atoms()
 
+    if recalculate:
+        dataset, itemMeaning, global_vars = pre(data_dir, args.protocol, args.node_num, murphi_url)
+        if end_with == 'pre':
+            return
+
+        print('{}\nLearning'.format('*' * 3))
+        rule_tuple, rule_string_list = learn(data_dir, args.protocol, dataset, itemMeaning, global_vars, args.kmax)
+        if end_with == 'learn':
+            return
+
+        print('{}\nSelecting'.format('*' * 30))
+        prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol))
+        aux_invs, _ = select(data_dir, args.protocol, args.abs_obj, home_flag, 1, rule_tuple,
+                             rule_string_list, prot_analyzer, all_types)
+    else:
+        if os.path.exists('{}/{}/data/aux_invs.json'.format(data_dir, args.protocol)):
+            aux_invs = joblib.load('{}/{}/data/aux_invs.json'.format(data_dir, args.protocol))
+        else:
+            aux_invs = list(map(lambda x: x.split(': ')[-1],
+                                open('{}/{}/aux_invs.txt'.format(data_dir, args.protocol), 'r').read().split('\n')))
+
+            aux_invs = list(map(lambda x: split_string_to_tuple(x), aux_invs))
+        print(aux_invs[:2])
+
+    prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol))
     print('{}\nStrenghening and abstracting'.format('*' * 30))
     abs_filename = "{1}/{0}/ABS_{0}.m".format(args.protocol, data_dir) if abs_filename is None else abs_filename
     iter_cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer, max_cnt=max_cnt)
@@ -175,8 +192,6 @@ def main(arguments):
     group.add_argument('-pre', '--preprocess', help="\'preprocess\': calculate reachable set only", action="store_true")
     group.add_argument('-l', '--learn', help="\'learn\': learn auxiliary invariants only", action="store_true")
     group.add_argument('-cmp', '--cmp', help="\'cmp\': conduct cmp only", action="store_true")
-    # group.add_argument('-str', '--strengh', help="\'cmp\': strengthen the protocol only", action="store_true")
-    # group.add_argument('-sa', '--refineabstract', help="\'cmp\': abstract the protocol only", action="store_true")
 
     parser.add_argument('-p', '--protocol', help="Name of the protocol under verification.",
                         type=str, required=True)
@@ -189,6 +204,8 @@ def main(arguments):
     parser.add_argument('-i', '--iter', help="Max iteration of strengthening", type=int, default=2)
     parser.add_argument('-src', '--srcfile', help="Path to the protocol under verification.", type=str)
     parser.add_argument('-out', '--outputfile', help="Path to the destination protocol.", type=str)
+    parser.add_argument('-r', '--recalculate', help="Whether recalculate all the support files.", type=str,
+                        choices=['y', 'n'], default='n')
 
     args = parser.parse_args(arguments)
     print(args)
@@ -197,20 +214,11 @@ def main(arguments):
 
     data_dir = './protocols'
     if args.all or args.cmp:
-        all(data_dir, args, murphi_url)
+        all(data_dir, args, murphi_url, recalculate=args.recalculate == 'y')
     elif args.preprocess:
-        all(data_dir, args, murphi_url,end_with='pre')
+        all(data_dir, args, murphi_url, end_with='pre', recalculate=args.recalculate == 'y')
     elif args.learn:
-        all(data_dir, args, murphi_url, end_with='learn')
-
-
-    # elif args.learn:
-
-    # elif args.cmp:
-    #     home_flag = False if args.node_num < 3 else True
-    #     iter_cmp(data_dir, args.protocol, args.abs_obj, args.kmax, home_flag, all_types, aux_invs, abs_filename,
-    #              prot_analyzer,
-    #              max_cnt=10)
+        all(data_dir, args, murphi_url, end_with='learn', recalculate=args.recalculate == 'y')
 
 
 if __name__ == '__main__':

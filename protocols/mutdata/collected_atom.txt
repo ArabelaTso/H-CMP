@@ -1,0 +1,5 @@
+n[NODE].st = C
+n[NODE].st = E
+n[NODE].st = I
+n[NODE].st = T
+x = true

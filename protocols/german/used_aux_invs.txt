@@ -1,0 +1,265 @@
+-- Auxiliary invariants used by RecvGntE1:
+Chan2[NODE_1].Cmd = GntE -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = GntE -> Chan2[NODE_2].Cmd = Empty
+Chan2[NODE_1].Cmd = GntE -> Chan2[NODE_1].Data = AuxData
+Chan2[NODE_1].Cmd = GntE -> ShrSet[NODE_2] = false
+Chan2[NODE_1].Cmd = GntE -> Cache[NODE_2].State != S
+Chan2[NODE_1].Cmd = GntE -> Chan3[NODE_2].Cmd != InvAck
+Chan2[NODE_1].Cmd = GntE -> Cache[NODE_2].State != E
+Chan2[NODE_1].Cmd = GntE -> Cache[NODE_2].State = I
+Chan2[NODE_1].Cmd = GntE -> InvSet[NODE_2] = false
+Chan2[NODE_1].Cmd = GntE -> MemData = AuxData
+Chan2[NODE_1].Cmd = GntE -> Chan3[NODE_2].Cmd = Empty
+Chan2[NODE_1].Cmd = GntE -> CurCmd != Empty
+Chan2[NODE_1].Cmd = GntE -> Chan2[NODE_2].Cmd != GntS
+Chan2[NODE_1].Cmd = GntE -> ExGntd = true
+Chan2[NODE_1].Cmd = GntE -> Chan2[NODE_2].Cmd != Inv
+
+-- Auxiliary invariants used by RecvGntS2:
+Chan2[NODE_1].Cmd = GntS -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = GntS -> ExGntd = false
+Chan2[NODE_1].Cmd = GntS -> MemData = AuxData
+Chan2[NODE_1].Cmd = GntS -> Cache[NODE_2].State != E
+Chan2[NODE_1].Cmd = GntS -> Chan2[NODE_1].Data = AuxData
+
+-- Auxiliary invariants used by SendGntE3:
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntE
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != Inv
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntS
+CurCmd = ReqE & ExGntd = false -> Cache[NODE_2].State != E
+ExGntd = false & ShrSet[NODE_2] = false -> InvSet[NODE_2] = false
+ExGntd = false & ShrSet[NODE_2] = false -> Cache[NODE_2].State = I
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Cache[NODE_2].State != E
+ExGntd = false & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntE
+ExGntd = false -> MemData = AuxData
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd != InvAck
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntE
+ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd != InvAck
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd = Empty
+ExGntd = false -> Cache[NODE_2].State != E
+ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != Inv
+ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntS
+ExGntd = false & ShrSet[NODE_2] = false -> MemData = AuxData
+ShrSet[NODE_2] = false -> InvSet[NODE_2] = false
+ExGntd = false & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != Inv
+ExGntd = false & ShrSet[NODE_2] = false -> Cache[NODE_2].State != E
+Chan2[NODE_1].Cmd = Empty & ExGntd = false -> MemData = AuxData
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Cache[NODE_2].State != E
+CurCmd = ReqE & ExGntd = false -> Chan2[NODE_2].Cmd != GntE
+ExGntd = false & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd = Empty
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Cache[NODE_2].State != S
+ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd = Empty
+ShrSet[NODE_2] = false -> Cache[NODE_2].State != S
+ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd = Empty
+ExGntd = false & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntS
+ExGntd = false & ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd != InvAck
+ShrSet[NODE_2] = false -> Cache[NODE_2].State != E
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntS
+Chan2[NODE_1].Cmd = Empty & ExGntd = false -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Cache[NODE_2].State = I
+ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != GntE
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd = Empty
+ExGntd = false & ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd = Empty
+ShrSet[NODE_2] = false -> Cache[NODE_2].State = I
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd = Empty
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Cache[NODE_2].State != S
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd = Empty
+CurCmd = ReqE & ShrSet[NODE_2] = false -> InvSet[NODE_2] = false
+ExGntd = false -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = Empty & ExGntd = false -> Cache[NODE_2].State != E
+ExGntd = false & ShrSet[NODE_2] = false -> Cache[NODE_2].State != S
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> Chan2[NODE_2].Cmd != Inv
+Chan2[NODE_1].Cmd = Empty & ShrSet[NODE_2] = false -> InvSet[NODE_2] = false
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Cache[NODE_2].State = I
+CurCmd = ReqE & ShrSet[NODE_2] = false -> Chan3[NODE_2].Cmd != InvAck
+
+-- Auxiliary invariants used by SendGntS4:
+CurCmd = ReqS & ExGntd = false -> Cache[NODE_2].State != E
+ExGntd = false -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = Empty & ExGntd = false -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = Empty & ExGntd = false -> Cache[NODE_2].State != E
+CurCmd = ReqS & ExGntd = false -> Chan2[NODE_2].Cmd != GntE
+CurCmd = ReqS & ExGntd = false -> Chan3[NODE_2].Cmd = Empty
+CurCmd = ReqS & ExGntd = false -> Chan3[NODE_2].Cmd != InvAck
+CurCmd = ReqS & ExGntd = false -> Chan2[NODE_2].Cmd != Inv
+ExGntd = false -> MemData = AuxData
+Chan2[NODE_1].Cmd = Empty & ExGntd = false -> MemData = AuxData
+ExGntd = false -> Cache[NODE_2].State != E
+
+-- Auxiliary invariants used by RecvInvAck5:
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan2[NODE_2].Cmd = Empty
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan2[NODE_2].Cmd != GntE
+ExGntd = true & CurCmd != Empty -> Chan2[NODE_2].Cmd != GntS
+ExGntd = true & CurCmd != Empty -> Cache[NODE_2].State != S
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan2[NODE_2].Cmd != GntS
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> InvSet[NODE_2] = false
+Chan3[NODE_1].Cmd = InvAck & CurCmd != Empty -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan2[NODE_2].Cmd != Inv
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Cache[NODE_2].State != S
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan3[NODE_2].Cmd != InvAck
+ExGntd = true -> Chan2[NODE_2].Cmd != GntS
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan3[NODE_1].Data = AuxData
+Chan3[NODE_1].Cmd = InvAck & CurCmd != Empty -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Cache[NODE_2].State = I
+Chan3[NODE_1].Cmd = InvAck -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> Chan3[NODE_2].Cmd = Empty
+ExGntd = true -> Cache[NODE_2].State != S
+Chan3[NODE_1].Cmd = InvAck -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = InvAck & ExGntd = true -> ShrSet[NODE_2] = false
+
+-- Auxiliary invariants used by RecvInvAck6:
+Chan3[NODE_1].Cmd = InvAck -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = InvAck & CurCmd != Empty -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = InvAck -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = InvAck & CurCmd != Empty -> Chan2[NODE_2].Cmd != GntE
+
+-- Auxiliary invariants used by SendInvAck7:
+Chan2[NODE_1].Cmd = Inv -> CurCmd != Empty
+Chan3[NODE_1].Cmd = Empty & Chan2[NODE_1].Cmd = Inv -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Cache[NODE_2].State != S
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> ExGntd = true
+Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd = Empty
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> ExGntd = true
+Chan2[NODE_1].Cmd = Inv -> Cache[NODE_2].State != E
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> ShrSet[NODE_2] = false
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd != InvAck
+Cache[NODE_1].State = E -> Cache[NODE_2].State != S
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != Inv
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Cache[NODE_2].State = I
+Cache[NODE_1].State = E -> Cache[NODE_2].State = I
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd != InvAck
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Cache[NODE_1].Data = AuxData
+Chan2[NODE_1].Cmd = Inv -> Chan2[NODE_2].Cmd != GntE
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = Empty & Chan2[NODE_1].Cmd = Inv -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> InvSet[NODE_2] = false
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntS
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != Inv
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntS
+Cache[NODE_1].State = E -> InvSet[NODE_2] = false
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> CurCmd != Empty
+Cache[NODE_1].State = E -> CurCmd != Empty
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Cache[NODE_2].State != S
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> ShrSet[NODE_2] = false
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd = Empty
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Cache[NODE_2].State = I
+Chan3[NODE_1].Cmd = Empty & Chan2[NODE_1].Cmd = Inv -> CurCmd != Empty
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd = Empty
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != Inv
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd = Empty
+Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd != InvAck
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntE
+Cache[NODE_1].State = E -> ExGntd = true
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd = Empty
+Cache[NODE_1].State = E -> ShrSet[NODE_2] = false
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> InvSet[NODE_2] = false
+Chan2[NODE_1].Cmd = Inv & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd = Empty
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntS
+Cache[NODE_1].State = E -> Cache[NODE_2].State != E
+Chan3[NODE_1].Cmd = Empty & Cache[NODE_1].State = E -> CurCmd != Empty
+
+-- Auxiliary invariants used by SendInvAck8:
+Chan2[NODE_1].Cmd = Inv -> CurCmd != Empty
+Chan3[NODE_1].Cmd = Empty & Chan2[NODE_1].Cmd = Inv -> Chan2[NODE_2].Cmd != GntE
+Chan2[NODE_1].Cmd = Inv -> Chan2[NODE_2].Cmd != GntE
+Chan3[NODE_1].Cmd = Empty & Chan2[NODE_1].Cmd = Inv -> Cache[NODE_2].State != E
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> Cache[NODE_2].State != E
+Chan2[NODE_1].Cmd = Inv -> Cache[NODE_2].State != E
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> ExGntd = false
+Chan3[NODE_1].Cmd = Empty & Chan2[NODE_1].Cmd = Inv -> CurCmd != Empty
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> Chan2[NODE_2].Cmd != GntE
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> CurCmd = ReqE
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> CurCmd != Empty
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> MemData = AuxData
+Cache[NODE_1].State != E & Chan2[NODE_1].Cmd = Inv -> CurCmd != ReqS
+
+-- Auxiliary invariants used by SendInv9:
+InvSet[NODE_1] = true & Chan2[NODE_1].Cmd = Empty -> Cache[NODE_2].State != E
+InvSet[NODE_1] = true & CurCmd = ReqE -> Cache[NODE_2].State != E
+InvSet[NODE_1] = true -> Chan2[NODE_2].Cmd != GntE
+InvSet[NODE_1] = true -> Cache[NODE_2].State != E
+InvSet[NODE_1] = true & Chan2[NODE_1].Cmd = Empty -> Chan2[NODE_2].Cmd != GntE
+InvSet[NODE_1] = true & CurCmd = ReqE -> Chan2[NODE_2].Cmd != GntE
+
+-- Auxiliary invariants used by SendInv10:
+InvSet[NODE_1] = true & ExGntd = true -> ShrSet[NODE_2] = false
+Chan2[NODE_1].Cmd = Empty & ExGntd = true -> Chan2[NODE_2].Cmd != GntS
+InvSet[NODE_1] = true & ExGntd = true -> Cache[NODE_2].State != E
+InvSet[NODE_1] = true & Chan2[NODE_1].Cmd = Empty -> Cache[NODE_2].State != E
+InvSet[NODE_1] = true & ExGntd = true -> InvSet[NODE_2] = false
+InvSet[NODE_1] = true & ExGntd = true -> Chan2[NODE_2].Cmd != GntE
+InvSet[NODE_1] = true & CurCmd = ReqS -> Chan3[NODE_2].Cmd = Empty
+InvSet[NODE_1] = true & ExGntd = true -> Chan2[NODE_2].Cmd = Empty
+InvSet[NODE_1] = true & Chan2[NODE_1].Cmd = Empty -> Chan2[NODE_2].Cmd != GntE
+ExGntd = true -> Chan2[NODE_2].Cmd != GntS
+InvSet[NODE_1] = true & ExGntd = true -> Chan3[NODE_2].Cmd != InvAck
+InvSet[NODE_1] = true & ExGntd = true -> Chan2[NODE_2].Cmd != Inv
+InvSet[NODE_1] = true & ExGntd = true -> Cache[NODE_2].State != S
+InvSet[NODE_1] = true -> Cache[NODE_2].State != E
+CurCmd = ReqS & ExGntd = true -> Chan2[NODE_2].Cmd != GntS
+InvSet[NODE_1] = true & ExGntd = true -> CurCmd != Empty
+InvSet[NODE_1] = true & ExGntd = true -> Chan2[NODE_2].Cmd != GntS
+InvSet[NODE_1] = true -> Chan2[NODE_2].Cmd != GntE
+InvSet[NODE_1] = true & CurCmd = ReqS -> Chan2[NODE_2].Cmd != GntE
+InvSet[NODE_1] = true & CurCmd = ReqS -> Chan2[NODE_2].Cmd != Inv
+ExGntd = true -> Cache[NODE_2].State != S
+Chan2[NODE_1].Cmd = Empty & ExGntd = true -> Cache[NODE_2].State != S
+InvSet[NODE_1] = true & ExGntd = true -> Chan3[NODE_2].Cmd = Empty
+InvSet[NODE_1] = true & CurCmd = ReqS -> Cache[NODE_2].State != E
+CurCmd = ReqS & ExGntd = true -> Cache[NODE_2].State != S
+InvSet[NODE_1] = true & CurCmd = ReqS -> Chan3[NODE_2].Cmd != InvAck
+InvSet[NODE_1] = true & ExGntd = true -> Cache[NODE_2].State = I
+
+-- Auxiliary invariants used by RecvReqE11:
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqE -> Chan2[NODE_2].Cmd != GntE
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqE -> Cache[NODE_2].State != E
+CurCmd = Empty -> Chan2[NODE_2].Cmd != Inv
+CurCmd = Empty -> Cache[NODE_2].State != E
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqE -> Chan2[NODE_2].Cmd != Inv
+CurCmd = Empty -> Chan3[NODE_2].Cmd = Empty
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqE -> Chan3[NODE_2].Cmd != InvAck
+CurCmd = Empty -> Chan2[NODE_2].Cmd != GntE
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqE -> Chan3[NODE_2].Cmd = Empty
+CurCmd = Empty -> Chan3[NODE_2].Cmd != InvAck
+
+-- Auxiliary invariants used by RecvReqS12:
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqS -> Chan2[NODE_2].Cmd != GntE
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqS -> Chan2[NODE_2].Cmd != Inv
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqS -> Chan3[NODE_2].Cmd = Empty
+CurCmd = Empty -> Chan2[NODE_2].Cmd != Inv
+CurCmd = Empty -> Cache[NODE_2].State != E
+CurCmd = Empty -> Chan3[NODE_2].Cmd = Empty
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqS -> Chan3[NODE_2].Cmd != InvAck
+CurCmd = Empty -> Chan2[NODE_2].Cmd != GntE
+CurCmd = Empty & Chan1[NODE_1].Cmd = ReqS -> Cache[NODE_2].State != E
+CurCmd = Empty -> Chan3[NODE_2].Cmd != InvAck
+
+-- Auxiliary invariants used by SendReqE14:
+Cache[NODE_1].State = S & Chan1[NODE_1].Cmd = Empty -> MemData = AuxData
+Cache[NODE_1].State = S & Chan1[NODE_1].Cmd = Empty -> ExGntd = false
+Cache[NODE_1].State = S & Chan1[NODE_1].Cmd = Empty -> Cache[NODE_2].State != E
+Cache[NODE_1].State = S -> Chan2[NODE_2].Cmd != GntE
+Cache[NODE_1].State = S & Chan1[NODE_1].Cmd = Empty -> Chan2[NODE_2].Cmd != GntE
+Cache[NODE_1].State = S -> Cache[NODE_2].State != E
+Cache[NODE_1].State = S -> MemData = AuxData
+Cache[NODE_1].State = S -> ExGntd = false
+
+-- Auxiliary invariants used by Store16:
+Cache[NODE_1].State = E -> InvSet[NODE_2] = false
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntE
+Cache[NODE_1].State = E -> ExGntd = true
+Cache[NODE_1].State = E -> CurCmd != Empty
+Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd = Empty
+Cache[NODE_1].State = E -> ShrSet[NODE_2] = false
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != GntS
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd = Empty
+Cache[NODE_1].State = E -> Chan2[NODE_2].Cmd != Inv
+Cache[NODE_1].State = E -> Cache[NODE_2].State != S
+Cache[NODE_1].State = E -> Cache[NODE_2].State != E
+Cache[NODE_1].State = E -> Cache[NODE_2].State = I
+Cache[NODE_1].State = E -> Chan3[NODE_2].Cmd != InvAck
+
