@@ -1,0 +1,59 @@
+
+********************
+rule rule_t1:
+rule used for replace: []
+NoAbstractRule
+********************
+rule rule_t2:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_1067,rule_1075,rule_127,rule_637,rule_287]
+********************
+rule rul_t3:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_361,rule_74,rule_628,rule_121]
+********************
+rule rul_t4:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_132,rule_39,rule_595,rule_1214,rule_1022]
+********************
+rule rul_t5:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_1067,rule_1075,rule_127,rule_637,rule_287]
+********************
+rule rule_t1:
+rule used for replace: []
+NoAbstractRule
+********************
+rule rule_t2:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_33,rule_5,rule_11,rule_19,rule_30]
+********************
+rule rul_t3:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_9,rule_34,rule_37,rule_22]
+********************
+rule rul_t4:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_35,rule_38,rule_6,rule_25,rule_28]
+********************
+rule rul_t5:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_33,rule_5,rule_11,rule_19,rule_30]
+
+output file in "./protocols/moesi/ABS_moesi.m"
