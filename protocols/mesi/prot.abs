@@ -1,0 +1,47 @@
+
+********************
+rule t1:
+rule used for replace: []
+NoAbstractRule
+********************
+rule t2:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_385,rule_549,rule_460,rule_506]
+********************
+rule t3:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_423,rule_585,rule_267,rule_89]
+********************
+rule t4:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_5,rule_487,rule_337,rule_209]
+********************
+rule t1:
+rule used for replace: []
+NoAbstractRule
+********************
+rule t2:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_4,rule_25,rule_30,rule_31]
+********************
+rule t3:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_8,rule_21,rule_26,rule_28]
+********************
+rule t4:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_9,rule_10,rule_18,rule_27]
+
+output file in "./protocols/mesi/ABS_mesi.m"
