@@ -654,9 +654,12 @@ class Abstractor(object):
             # print('write abstract rules')
             self.print_abs_rule(abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix='_'.join(abs_para_list))
 
+            # open(self.logfile, 'a').write('\naux_invs: \n[{}]'.format(
+            #     ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
+            #                  self.used_inv_string_list))))
             open(self.logfile, 'a').write('\naux_invs: \n[{}]'.format(
-                ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
-                             self.used_inv_string_list))))
+                ','.join(map(lambda x: 'rule_{}'.format(self.dict_inv2index[x]),
+                               self.used_inv_string_list))))
 
     def abstract_2_para(self):
         abs_para = [self.abs_type + '_1']
