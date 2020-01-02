@@ -76,7 +76,7 @@ class DataProcess(object):
         self.name = name
         self.replace_index = replace_index
         self.atom_formulas = self.get_atoms(atom_formulas)
-        self.has_atom = os.path.exists('{0}/atom.txt'.format(self.name)) or has_atom
+        self.has_atom = os.path.exists("{}/{}/atom.txt".format(self.data_dir, self.name)) or has_atom
         print(self.replace_index)
 
     def read_trans(self):
@@ -143,7 +143,7 @@ class DataProcess(object):
         """
         print('Reading reachable set')
 
-        if not os.path.exists('{0}/{0}.csv'.format(self.name)) or not self.is_rs_match_dataset():
+        if not os.path.exists('{0}/{1}/{1}.csv'.format(self.data_dir, self.name)) or not self.is_rs_match_dataset():
             return self.txt2csv()
         else:
             return self.readcsv()
@@ -156,18 +156,19 @@ class DataProcess(object):
         NOTE: actually csv file will add a title line with variable names, so # states in txt +1 = # lines in csv
         """
         print('call is_rs_match_dataset')
-        if not os.path.exists('{0}/{0}.txt'.format(self.name)):
+        filename = '{0}/{1}/{1}'.format(self.data_dir, self.name)
+        if not os.path.exists("{}.txt".format(filename)):
             print('Cannot find reachable state set file. \nNot sure whether the reachable set matches the protocol.')
             return True
 
-        csv_cnt = subprocess.check_output(['wc', '-l', '{0}/{0}.csv'.format(self.name)]).decode('utf-8')
-        tail_rs = subprocess.check_output(['tail', '{0}/{0}.txt'.format(self.name)]).decode('utf-8')
+        csv_cnt = subprocess.check_output(['wc', '-l', '{}.csv'.format(filename)]).decode('utf-8')
+        tail_rs = subprocess.check_output(['tail', '{}.txt'.format(filename)]).decode('utf-8')
         return int(re.findall(r'\d+', csv_cnt)[0]) == int(
             re.findall(r'State Space Explored:.*?(\d+)\sstates', tail_rs, re.S)[0]) + 1
 
     def readcsv(self, input_file=""):
         print('call read_csv')
-        input_file = '{0}/{0}.csv'.format(self.name) if not input_file else input_file
+        input_file = '{0}/{1}/{1}.csv'.format(self.data_dir, self.name) if not input_file else input_file
         df = pd.read_csv(input_file)
         stateDict = {}
         booleandf = set(df.select_dtypes(include=[bool]).columns.values)
@@ -180,7 +181,7 @@ class DataProcess(object):
 
     def read_trans_dataset(self):
         print('call trans_dataset')
-        df = pd.read_csv('{0}/trans_dataset.csv'.format(self.name))
+        df = pd.read_csv('{}/{}/trans_dataset.csv'.format(self.data_dir, self.name))
         stateDict = {}
         booleandf = set(df.select_dtypes(include=[bool]).columns.values)
 
@@ -192,8 +193,10 @@ class DataProcess(object):
 
     def txt2csv(self):
         print('txt2csv...')
-        csv_filename = '{0}/{1}/{1}.csv'.format(self.data_dir, self.name)
-        reachset = open('{0}/{1}/{1}.txt'.format(self.data_dir, self.name)).read()
+        prefix_filename = '{0}/{1}/{1}'.format(self.data_dir, self.name)
+        csv_filename = prefix_filename + '.csv'
+        txt_filename = prefix_filename + '.txt'
+        reachset = open(txt_filename).read()
 
         if self.replace_index:
             for k, v in self.replace_index.items():
@@ -288,7 +291,7 @@ class DataProcess(object):
         assert len(new_statelist) == len(t_statelist[0])
         assert len(new_statelist[0]) == len(t_statelist)
 
-        with open('{0}/trans_dataset.csv'.format(self.name), 'w') as f:
+        with open('{}/{}/trans_dataset.csv'.format(self.data_dir, self.name), 'w') as f:
             for state_line in t_statelist:
                 f.write('{}\n'.format(','.join(state_line)))
 
@@ -382,6 +385,7 @@ class DataProcess(object):
             return atom_formulas
         else:
             file_name = "{}/{}/atom.txt".format(self.data_dir, self.name)
+
             return set(filter(lambda x: x,
                               map(lambda x: re.sub(r'[()]', '', x.strip()), open(file_name, 'r').read().split("\n"))))
 
