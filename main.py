@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import copy
 import argparse
@@ -182,6 +183,16 @@ def all(data_dir, args, murphi_url, max_cnt=10, end_with='all', abs_filename=Non
     iter_cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer, max_cnt=max_cnt)
 
 
+def gen_no_scalar(data_dir, prot_name):
+    abs_filename = "{0}/{1}/ABS_{1}_1".format(data_dir, prot_name)
+    noscar_filename = "{}_no_scalar".format(abs_filename)
+
+    if os.path.exists("{}.m".format(abs_filename)):
+        content = open("{}.m".format(abs_filename), 'r').read()
+        new_content = re.sub(r'scalarset\((.*?)\);', r'1..\1;', content)
+        open("{}.m".format(noscar_filename), 'w').write(new_content)
+
+
 def main(arguments):
     parser = argparse.ArgumentParser(
         description='{0}\n{1}\n{0}\n'.format('*' * 15, 'Learning-based CMP (L-CMP)'),
@@ -218,6 +229,10 @@ def main(arguments):
         all(data_dir, args, murphi_url, end_with='pre', recalculate=args.recalculate == 'y')
     elif args.learn:
         all(data_dir, args, murphi_url, end_with='learn', recalculate=args.recalculate == 'y')
+    else:
+        print('Require parameter \"-all\" or \"-pre\" or \"-\l"')
+
+    gen_no_scalar(data_dir, args.protocol)
 
 
 if __name__ == '__main__':
