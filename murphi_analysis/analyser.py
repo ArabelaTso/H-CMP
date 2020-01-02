@@ -664,7 +664,7 @@ class Abstractor(object):
             #     ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
             #                  self.used_inv_string_list))))
             open(self.logfile, 'a').write(
-                '[{}],{}'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
+                '[{}],{},'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
 
             open(self.logfile, 'a').write('\n[{}],'.format(
                 ','.join(map(lambda x: 'n_rule_{}'.format(self.dict_inv2index[x]),
