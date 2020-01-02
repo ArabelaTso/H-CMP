@@ -397,7 +397,8 @@ class Ruleset(object):
                 rulename, guards_obj, actions_obj = self.sparse_rule(each_rule, param_name_dict)
 
                 print("\n\n[Rulename]: %s" % rulename)
-                open(logfile, 'a').write('\n{}\nrule {}:\n'.format('*' * 20, rulename))
+                open(logfile, 'a').write('\n\nn_{}:\n'.format(rulename))
+                # open(logfile, 'a').write('[{}],'.format(','.join(param_name_dict.keys())))
 
                 normalization(guards_obj)
                 normalization(actions_obj)
@@ -522,6 +523,7 @@ class Abstractor(object):
         new_action_content = []
         rep_dict, added_dict = {}, {}
         rep_dict_to_string = {}
+        rep_index = []
 
         def check_other_types(all_types, stmt, origin_dict):
             temp_dict = {}
@@ -550,18 +552,21 @@ class Abstractor(object):
             for abs_para in abs_para_list:
                 if re.findall(r'%s' % abs_para, assign):
                     if assign in rep_dict:
-                        is_repl = True
+                        # is_repl = True
                         stmt = stmt.replace(assign, rep_dict[assign])
                         added_dict.update(check_other_types(self.all_types, stmt, self.action_obj.mainfield.para_dict))
                         self.used_inv_string_list.append(rep_dict_to_string[assign])
-                        open(self.logfile, 'a').write(
-                            'replace: {}\n'.format(self.dict_inv2index[rep_dict_to_string[assign]]))
+                        rep_index.append(self.dict_inv2index[rep_dict_to_string[assign]])
+                        # open(self.logfile, 'a').write(
+                        #     'replace: {}\n'.format(self.dict_inv2index[rep_dict_to_string[assign]]))
 
             new_action_content.append(stmt)
-        if not is_repl:
-            open(self.logfile, 'a').write('rule used for replace: []\n')
+        # if not is_repl:
+        #     open(self.logfile, 'a').write('rule used for replace: []\n')
         self.action_obj.mainfield.content = new_action_content
         self.action_obj.mainfield.para_dict.update(added_dict)
+
+        return rep_index
 
     def abstract(self):
         main_para = self.guard_obj.mainfield.para_dict
@@ -635,7 +640,7 @@ class Abstractor(object):
             abs_para_list = [self.abs_type + '_1']
         print('abstract parameter: {}'.format(', '.join(abs_para_list)))
 
-        self.rep_global(self.aux_invs, self.action_obj, abs_para_list)
+        rep_index = self.rep_global(self.aux_invs, self.action_obj, abs_para_list)
 
         abs_action_obj = self.asbtract_obj(self.action_obj, abs_para_list)[0]
         abs_guard_obj = self.asbtract_obj(self.guard_obj, abs_para_list)[0]
@@ -644,22 +649,27 @@ class Abstractor(object):
         if check_empty(abs_action_obj):
             print('action part is empty')
             self.print_string += '\n\n-- No abstract rule for rule {}\n\n'.format(self.rulename)
-            open(self.logfile, 'a').write('NoAbstractRule')
-        else:
-            # log
             open(self.logfile, 'a').write(
-                'abstract node: [{}],'.format(','.join(map(lambda x: transform(x), abs_para_list))))
+                '[{}], NoAbstractRule'.format(','.join(map(lambda x: transform(x), abs_para_list))))
+        else:
+
             # open(self.logfile, 'a').write(
             #     '[{}]'.format(','.join(map(lambda x: 'rule_{}'.format(self.dict_inv2index[x])), )))
             # print('write abstract rules')
-            self.print_abs_rule(abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix='_'.join(abs_para_list))
+
+            abs_rule_name = "n_ABS_{}_{}".format(self.rulename, '_'.join(abs_para_list))
+            self.print_abs_rule(abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, abs_rule_name)
 
             # open(self.logfile, 'a').write('\naux_invs: \n[{}]'.format(
             #     ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
             #                  self.used_inv_string_list))))
-            open(self.logfile, 'a').write('\naux_invs: \n[{}]'.format(
-                ','.join(map(lambda x: 'rule_{}'.format(self.dict_inv2index[x]),
-                               self.used_inv_string_list))))
+            open(self.logfile, 'a').write(
+                '[{}],abs_rule_name'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
+
+            open(self.logfile, 'a').write('\n[{}],'.format(
+                ','.join(map(lambda x: 'n_rule_{}'.format(self.dict_inv2index[x]),
+                             self.used_inv_string_list))))
+            open(self.logfile, 'a').write('[{}]'.format(','.join(map(lambda x: 'n_rule_{}'.format(x), rep_index))))
 
     def abstract_2_para(self):
         abs_para = [self.abs_type + '_1']
@@ -677,7 +687,7 @@ class Abstractor(object):
         abs_action_obj.print_value(title='ABS_%s%s action' % (self.rulename, prefix))
         print('abs_inv', abs_inv)
 
-    def print_abs_rule(self, abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix=""):
+    def print_abs_rule(self, abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, abs_rulename):
         print('\nPrint abstract rule of {}, abstract {}'.format(self.rulename, ','.join(abs_para_list)))
 
         def pop_key_from_field_list(temp_obj, k_list):
@@ -707,7 +717,9 @@ class Abstractor(object):
                 print_string = print_string + '\n\nruleset %s do' % '; '.join(
                     ('{} : {}'.format(k, v) for k, v in para_dict.items()))
 
-            print_string += '\nrule \"ABS_%s_%s\"\n' % (self.rulename, prefix)
+            # print_string += '\nrule \"ABS_%s_%s\"\n' % (self.rulename, prefix)
+            print_string += '\nrule \"{}\"\n'.format(abs_rulename)
+
 
             guard_string = self.print_guard(
                 pop_key_from_field_list(abs_guard_obj, set(abs_para_list) | set(main_list)))

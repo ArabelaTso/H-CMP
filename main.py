@@ -95,7 +95,6 @@ def cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer):
                                                                      print_usedinvs_to_file=True,
                                                                      boundary_K=args.kmax)
 
-    open(prot_analyzer.logfile, 'a').write('\n\noutput file in \"{}\"'.format(abs_filename))
     with open(abs_filename, 'a') as fw:
         fw.write(print_info)
 
