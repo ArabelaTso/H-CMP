@@ -1,0 +1,55 @@
+
+
+n_RecvGntE1:
+[i], NoAbstractRule
+
+n_RecvGntS2:
+[i], NoAbstractRule
+
+n_SendGntE3:
+[i],n_ABS_SendGntE3_NODE_1,
+[n_rule_256,n_rule_255,n_rule_4,n_rule_383,n_rule_393,n_rule_267,n_rule_396,n_rule_269,n_rule_270,n_rule_143,n_rule_275,n_rule_276,n_rule_23,n_rule_283,n_rule_28,n_rule_159,n_rule_292,n_rule_37,n_rule_41,n_rule_172,n_rule_173,n_rule_174,n_rule_47,n_rule_300,n_rule_51,n_rule_308,n_rule_316,n_rule_65,n_rule_324,n_rule_69,n_rule_197,n_rule_72,n_rule_327,n_rule_329,n_rule_75,n_rule_333,n_rule_214,n_rule_247,n_rule_349,n_rule_351,n_rule_229,n_rule_104,n_rule_107,n_rule_238,n_rule_367,n_rule_241,n_rule_248,n_rule_252,n_rule_127],[]
+
+n_SendGntS4:
+[i],n_ABS_SendGntS4_NODE_1,
+[n_rule_256,n_rule_65,n_rule_360,n_rule_10,n_rule_267,n_rule_14,n_rule_283,n_rule_21,n_rule_312,n_rule_247,n_rule_351],[]
+
+n_RecvInvAck5:
+[i],n_ABS_RecvInvAck5_NODE_1,
+[n_rule_245,n_rule_1,n_rule_389,n_rule_135,n_rule_266,n_rule_399,n_rule_280,n_rule_304,n_rule_50,n_rule_180,n_rule_187,n_rule_201,n_rule_330,n_rule_77,n_rule_217,n_rule_224,n_rule_102,n_rule_236,n_rule_239,n_rule_368],[n_rule_245]
+
+n_RecvInvAck6:
+[i], NoAbstractRule
+
+n_SendInvAck7:
+[i], NoAbstractRule
+
+n_SendInvAck8:
+[i], NoAbstractRule
+
+n_SendInv9:
+[i], NoAbstractRule
+
+n_SendInv10:
+[i], NoAbstractRule
+
+n_RecvReqE11:
+[i],n_ABS_RecvReqE11_NODE_1,
+[n_rule_384,n_rule_287,n_rule_262,n_rule_263,n_rule_392,n_rule_78,n_rule_178,n_rule_19,n_rule_179,n_rule_306],[]
+
+n_RecvReqS12:
+[i],n_ABS_RecvReqS12_NODE_1,
+[n_rule_131,n_rule_68,n_rule_287,n_rule_263,n_rule_392,n_rule_78,n_rule_15,n_rule_19,n_rule_371,n_rule_117],[]
+
+n_SendReqE13:
+[i], NoAbstractRule
+
+n_SendReqE14:
+[i], NoAbstractRule
+
+n_SendReqS15:
+[i], NoAbstractRule
+
+n_Store16:
+[i],n_ABS_Store16_NODE_1,
+[n_rule_257,n_rule_261,n_rule_142,n_rule_29,n_rule_186,n_rule_321,n_rule_326,n_rule_216,n_rule_346,n_rule_230,n_rule_235,n_rule_373,n_rule_123],[]
