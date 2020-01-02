@@ -1,0 +1,29 @@
+
+********************
+rule Try:
+rule used for replace: []
+NoAbstractRule
+********************
+rule Crit:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_1,rule_3,rule_37,rule_7,rule_39,rule_11,rule_14,rule_18,rule_23,rule_24,rule_26]
+********************
+rule Exit:
+rule used for replace: []
+NoAbstractRule
+********************
+rule Idle:
+replace: 10
+abstract node: [i],
+aux_invs: 
+[rule_10,rule_35,rule_42,rule_38]
+********************
+rule Store:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_33,rule_19,rule_13]
+
+output file in "./protocols/mutdata/ABS_mutdata.m"
