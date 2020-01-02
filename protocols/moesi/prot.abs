@@ -1,0 +1,20 @@
+
+
+n_rule_t1:
+[i], NoAbstractRule
+
+n_rule_t2:
+[i],n_ABS_rule_t2_NODE_1,
+[n_rule_35,n_rule_37,n_rule_15,n_rule_25,n_rule_30],[]
+
+n_rul_t3:
+[i],n_ABS_rul_t3_NODE_1,
+[n_rule_16,n_rule_26,n_rule_19,n_rule_5],[]
+
+n_rul_t4:
+[i],n_ABS_rul_t4_NODE_1,
+[n_rule_32,n_rule_38,n_rule_10,n_rule_23,n_rule_31],[]
+
+n_rul_t5:
+[i],n_ABS_rul_t5_NODE_1,
+[n_rule_35,n_rule_37,n_rule_15,n_rule_25,n_rule_30],[]
