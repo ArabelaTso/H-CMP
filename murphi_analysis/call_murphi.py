@@ -24,8 +24,9 @@ def run_murphi(data_dir, prot_name, murphi_dir, aux_para=''):
                                 stderr=subprocess.PIPE)
     (stdout, stderr) = process1.communicate()
     if not re.search(r'Code generated', stdout.decode('utf-8')):
-        print('here', stderr.decode('utf-8'))
+        print('Wrong', stderr.decode('utf-8'))
         raise ValueError
+        sys.exit()
     else:
         print('Code generated')
 
