@@ -2,6 +2,8 @@ import re
 import sys
 import copy
 import getopt
+from preprocess_opts.utils import transform
+
 from shutil import copyfile
 import collections
 
@@ -383,7 +385,7 @@ class Ruleset(object):
         self.atoms |= guard_obj.collect_atoms()
         print('collect atoms from %s' % rule_name)
 
-    def sparse_rulesets(self, aux_invs, abs_type, boundary_K, print_usedinvs_to_file=False):
+    def sparse_rulesets(self, aux_invs, abs_type, boundary_K, logfile, print_usedinvs_to_file=False):
         pattern = re.compile(r'ruleset(.*?)do(.*?)endruleset\s*;', re.S)
         rulesets = pattern.findall(self.text)
 
@@ -395,21 +397,33 @@ class Ruleset(object):
                 rulename, guards_obj, actions_obj = self.sparse_rule(each_rule, param_name_dict)
 
                 print("\n\n[Rulename]: %s" % rulename)
+                open(logfile, 'a').write('\n{}\nrule {}:\n'.format('*' * 20, rulename))
 
                 normalization(guards_obj)
                 normalization(actions_obj)
 
                 # refine guard, return useful_invs
                 refiner = Reiner(rulename, guards_obj, aux_invs)
-                useful_invs = refiner.find_useful_invs(boundary_K=boundary_K)
+                useful_invs, useful_invs_index = refiner.find_useful_invs(boundary_K=boundary_K)
+                dict_inv2index = refiner.dict_inv2index
+                # print("dict_inv2index = {}".format(dict_inv2index))
+
+                # open(logfile, 'a').write(
+                #     'aux_invs used for refine:[{}],\n'.format(','.join(map(lambda x: 'rule_{}'.format(x), useful_invs_index))))
 
                 # abstract
-                abstracter = Abstractor(rulename, guards_obj, actions_obj, abs_type, useful_invs, self.type)
+                abstracter = Abstractor(rulename, guards_obj, actions_obj, abs_type, useful_invs, self.type, logfile,
+                                        dict_inv2index)
                 abstracter.abstract()
                 abstracter.used_inv_string_list = list(set(abstracter.used_inv_string_list))
 
                 self.print_info += abstracter.print_string
                 self.used_inv_string_set |= set(abstracter.used_inv_string_list)
+
+                # open(logfile, 'a').write('\n\naux_invs: [{}]'.format(
+                #     ','.join(map(lambda x: 'rule_{}'.format(abstracter.dict_inv2index[x]),
+                #                  abstracter.used_inv_string_list))))
+
                 # return abstracter.used_inv_string_list, rulename
                 if print_usedinvs_to_file:
                     self.write_usedinv_to_file(abstracter.used_inv_string_list, rulename)
@@ -417,11 +431,11 @@ class Ruleset(object):
     def write_usedinv_to_file(self, string_list, rulename):
         fout = '{}/{}/used_aux_invs.txt'.format(self.data_dir, self.protocol_name)
 
-        with open(fout, 'a') as f:
-            if string_list:
+        if string_list:
+            with open(fout, 'a') as f:
                 f.write('-- Auxiliary invariants used by {}:\n{}\n\n'.format(rulename, '\n'.join(
                     string_list)))
-        print('-- Auxiliary invariants used by {}: {}'.format(rulename, len(string_list)))
+            print('-- Auxiliary invariants used by {}: {}'.format(rulename, len(string_list)))
 
     def sparse_rule(self, rule_text, param_name_dict):
         pattern = re.compile(r'rule\s*\"(.*?)\"\s*(.*?)==>.*?begin(.*?)endrule\s*;', re.S)
@@ -438,20 +452,22 @@ class Reiner(object):
         self.rulename = rulename
         self.guard_obj = guard_obj
         self.aux_invs = aux_invs
-        self.dict_aux_invs = self.map_aux_to_dict()
+        self.dict_inv2index = {}
+        self.dict_index2inv = {}
+        self.construct_dicts()
         self.used_inv_index = set()
 
-    def map_aux_to_dict(self):
-        dict_aux_invs = {}
+    def construct_dicts(self):
+        print('type fo self.aux_invs = {}'.format(type(self.aux_invs)))
         for i, aux_inv in enumerate(self.aux_invs, 1):
-            dict_aux_invs[i] = aux_inv
-        return dict_aux_invs
+            self.dict_index2inv[i] = aux_inv
+            self.dict_inv2index[' & '.join(aux_inv[0]) + ' -> ' + aux_inv[1]] = i
 
     def map_index_to_inv(self):
-        used_index = []
+        used_inv = []
         for index in self.used_inv_index:
-            used_index.append(self.dict_aux_invs[index])
-        return used_index
+            used_inv.append(self.dict_index2inv[index])
+        return used_inv
 
     def find_useful_invs(self, boundary_K, guard=set()):
         if not guard:
@@ -469,9 +485,7 @@ class Reiner(object):
         #     iter_cons = self.find_useful_invs_iter(guard | iter_cons)
         used_invset = self.map_index_to_inv()
         self.evaluate(used_invset)
-
-        # print("Boundary loop K = {}, current loop K = {}. ".format(boundary_K, temp_k))
-        return used_invset
+        return used_invset, self.used_inv_index
 
     def find_useful_invs_iter(self, guard):
         useful_cond = set()
@@ -492,7 +506,7 @@ class Reiner(object):
 
 
 class Abstractor(object):
-    def __init__(self, rulename, guard_obj, action_obj, abs_type, aux_invs, all_types):
+    def __init__(self, rulename, guard_obj, action_obj, abs_type, aux_invs, all_types, logfile, dict_inv2index):
         self.rulename = rulename
         self.guard_obj = guard_obj
         self.action_obj = action_obj
@@ -501,6 +515,8 @@ class Abstractor(object):
         self.all_types = all_types
         self.print_string = ""
         self.used_inv_string_list = []
+        self.logfile = logfile
+        self.dict_inv2index = dict_inv2index
 
     def rep_global(self, aux_inv_list, action_obj, abs_para_list):
         new_action_content = []
@@ -517,23 +533,33 @@ class Abstractor(object):
             return temp_dict
 
         for pre, cond in aux_inv_list:
+            if not pre or not cond: continue
             if re.findall('!', cond):
                 continue
             parts = re.split(r'\s=\s', cond)
+            # print('cond = {}, part = {}'.format(cond, parts))
+
             left, right = parts[0], parts[1]
             if not re.findall(r'\[', right):
                 rep_dict[left] = right
                 rep_dict_to_string[left] = (' & '.join(pre) + ' -> ' + ''.join(cond))
 
+        is_repl = False
         for stmt in list(filter(lambda x: re.findall(':=', x), action_obj.mainfield.content)):
             assign = re.split(r':=\s*.*?', stmt)[1]
             for abs_para in abs_para_list:
                 if re.findall(r'%s' % abs_para, assign):
                     if assign in rep_dict:
+                        is_repl = True
                         stmt = stmt.replace(assign, rep_dict[assign])
                         added_dict.update(check_other_types(self.all_types, stmt, self.action_obj.mainfield.para_dict))
                         self.used_inv_string_list.append(rep_dict_to_string[assign])
+                        open(self.logfile, 'a').write(
+                            'replace: {}\n'.format(self.dict_inv2index[rep_dict_to_string[assign]]))
+
             new_action_content.append(stmt)
+        if not is_repl:
+            open(self.logfile, 'a').write('rule used for replace: []\n')
         self.action_obj.mainfield.content = new_action_content
         self.action_obj.mainfield.para_dict.update(added_dict)
 
@@ -545,10 +571,13 @@ class Abstractor(object):
         print('\ninclude %d abstract type' % cnt)
 
         if cnt == 0:
+            print('\nRule {} has no parameter.'.format(self.rulename))
             return
         elif cnt == 1:
+            print('\nRule {} has 1 parameter.'.format(self.rulename))
             self.abstract_1_para()
         elif cnt == 2:
+            print('\nRule {} has 2 parameter.'.format(self.rulename))
             self.abstract_2_para()
         else:
             print('Too many abstracted types, cannot symmetrically abstract!')
@@ -563,35 +592,24 @@ class Abstractor(object):
         return list(set(abs_inv))
 
     def asbtract_obj(self, origin_obj, abs_para_list):
-        abs_obj_list = []
-        # print('abstract list {} '.format(abs_para_list))
         for abs_para in abs_para_list:
-            # abs_obj = Part()
-            # abs_obj.mainfield.para_dict = origin_obj.mainfield.para_dict
             origin_obj.mainfield.content = self.abstract_list(abs_para, origin_obj.mainfield.content)
-            # origin_obj.mainfield.content = abs_obj.mainfield.content
 
             index = 0
             while index < len(origin_obj.forfield) and origin_obj.forfield:
-                # abs_obj.forfield.append(Field())
-                # abs_obj.forfield[index].para_dict = origin_obj.forfield[index].para_dict
                 origin_obj.forfield[index].content = self.abstract_list(abs_para, origin_obj.forfield[index].content)
                 index += 1
 
             index = 0
             while index < len(origin_obj.existfield) and origin_obj.existfield:
-                # abs_obj.existfield[index].para_dict = origin_obj.existfield[index].para_dict
                 origin_obj.existfield[index].content = self.abstract_list(abs_para,
                                                                           origin_obj.existfield[index].content)
                 index += 1
-
-            # abs_obj_list.append(abs_obj)
-
-        return [origin_obj]  # abs_obj_list
+        return [origin_obj]
 
     def abstract_list(self, abs_para, waiting_list):
-
-        if not abs_para: abs_para = abs_para
+        if not abs_para:
+            abs_para = abs_para
         rest_list = []
         for wl in waiting_list:
             if not re.findall(r'\[%s\]' % abs_para, wl):
@@ -611,23 +629,34 @@ class Abstractor(object):
                     return False
             if abs_obj.mainfield.content:
                 return False
-
             return True
 
         if not abs_para_list:
             abs_para_list = [self.abs_type + '_1']
-        print('abstract parameter: %s' % ', '.join(abs_para_list))
+        print('abstract parameter: {}'.format(', '.join(abs_para_list)))
 
         self.rep_global(self.aux_invs, self.action_obj, abs_para_list)
+
         abs_action_obj = self.asbtract_obj(self.action_obj, abs_para_list)[0]
         abs_guard_obj = self.asbtract_obj(self.guard_obj, abs_para_list)[0]
         abs_inv = self.abstract_inv(self.aux_invs, abs_para_list)
 
         if check_empty(abs_action_obj):
-            self.print_string += '\n\n-- No abstract rule for rule %s\n\n' % self.rulename
-            return
+            print('action part is empty')
+            self.print_string += '\n\n-- No abstract rule for rule {}\n\n'.format(self.rulename)
+            open(self.logfile, 'a').write('NoAbstractRule')
         else:
+            # log
+            open(self.logfile, 'a').write(
+                'abstract node: [{}],'.format(','.join(map(lambda x: transform(x), abs_para_list))))
+            # open(self.logfile, 'a').write(
+            #     '[{}]'.format(','.join(map(lambda x: 'rule_{}'.format(self.dict_inv2index[x])), )))
+            # print('write abstract rules')
             self.print_abs_rule(abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix='_'.join(abs_para_list))
+
+            open(self.logfile, 'a').write('\naux_invs: \n[{}]'.format(
+                ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
+                             self.used_inv_string_list))))
 
     def abstract_2_para(self):
         abs_para = [self.abs_type + '_1']
@@ -640,13 +669,13 @@ class Abstractor(object):
         self.abstract_1_para(abs_para)
 
     def evaluate(self, abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix=""):
-        print('\nhere print abstract rule')
         print('ABS_%s%s' % (self.rulename, prefix))
         abs_guard_obj.print_value(title='ABS_%s%s guard' % (self.rulename, prefix))
         abs_action_obj.print_value(title='ABS_%s%s action' % (self.rulename, prefix))
         print('abs_inv', abs_inv)
 
     def print_abs_rule(self, abs_guard_obj, abs_action_obj, abs_inv, abs_para_list, prefix=""):
+        print('\nPrint abstract rule of {}, abstract {}'.format(self.rulename, ','.join(abs_para_list)))
 
         def pop_key_from_field_list(temp_obj, k_list):
             new_obj = copy.deepcopy(temp_obj)
@@ -701,9 +730,9 @@ class Abstractor(object):
 
             print_string = print_string + '\nendrule;'
             if len(para_dict) >= 1:
-                print_string += '\nendruleset;\n'
+                print_string += '\nendruleset;\n\n'
 
-            self.print_string = print_string
+            self.print_string += print_string
 
     def print_inv(self, abs_inv, para_dict):
         if not abs_inv: return ""
@@ -868,19 +897,22 @@ class Protocol(object):
     def __init__(self, data_dir, protocol_name, file_url):
         self.data_dir = data_dir
         self.protocol_name = protocol_name
-        f = open(file_url, 'r')
-        self.text = f.read()
-        f.close()
+        self.file_url = file_url
+        self.logfile = '{}/{}/prot.abs'.format(self.data_dir, self.protocol_name)
+
+    def read_file(self):
+        return open(self.file_url).read()
 
     def show_config(self):
-        config = re.findall(r'(\w+)\s*:\s*(\d+)\s*;', self.text)
+        text = self.read_file()
+        config = re.findall(r'(\w+)\s*:\s*(\d+)\s*;', text)
         for name, num in config:
             print('{} : {}'.format(name, num))
 
     def collect_atoms(self):
-        typedf = TypeDef(self.text)
-        # print('typedef', typedf.const, typedf.para, typedf.type)
-        ruleset = Ruleset(self.data_dir, self.protocol_name, self.text, typedf.para)
+        text = self.read_file()
+        typedf = TypeDef(text)
+        ruleset = Ruleset(self.data_dir, self.protocol_name, text, typedf.para)
         ruleset.collect_atoms_from_ruleset()
         with open('{}/{}/collected_atom.txt'.format(self.data_dir, self.protocol_name), 'w') as f:
             f.write('\n'.join(ruleset.atoms))
@@ -888,7 +920,8 @@ class Protocol(object):
         return typedf.type
 
     def refine_abstract(self, aux_invs, abs_type, print_usedinvs_to_file=False, boundary_K=1):
-        typedf = TypeDef(self.text)
-        ruleset = Ruleset(self.data_dir, self.protocol_name, self.text, typedf.type.keys())
-        ruleset.sparse_rulesets(aux_invs, abs_type, boundary_K, print_usedinvs_to_file)
+        text = self.read_file()
+        typedf = TypeDef(text)
+        ruleset = Ruleset(self.data_dir, self.protocol_name, text, typedf.type.keys())
+        ruleset.sparse_rulesets(aux_invs, abs_type, boundary_K, self.logfile, print_usedinvs_to_file)
         return ruleset.print_info, list(ruleset.used_inv_string_set)
