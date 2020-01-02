@@ -4,26 +4,12 @@ n_Try:
 [i], NoAbstractRule
 
 n_Crit:
-[i],abs_rule_name
-[n_rule_800,n_rule_762,n_rule_681,n_rule_809,n_rule_174,n_rule_655,n_rule_854,n_rule_410,n_rule_765],[]
-
-n_Exit:
-[i], NoAbstractRule
-
-n_Idle:
-[i],abs_rule_name
-[n_rule_704,n_rule_908,n_rule_692],[]
-
-n_Try:
-[i], NoAbstractRule
-
-n_Crit:
-[i],abs_rule_name
+[i],n_ABS_Crit_NODE_1
 [n_rule_35,n_rule_5,n_rule_6,n_rule_37,n_rule_9,n_rule_19,n_rule_24,n_rule_27,n_rule_31],[]
 
 n_Exit:
 [i], NoAbstractRule
 
 n_Idle:
-[i],abs_rule_name
+[i],n_ABS_Idle_NODE_1
 [n_rule_11,n_rule_21,n_rule_38],[]
