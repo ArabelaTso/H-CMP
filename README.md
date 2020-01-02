@@ -64,32 +64,6 @@
 
     之后就可以正常使用`-finderrors` 这个参数了（原来的cmurphi中虽然设置了这个参数，但没有实现）= =|||
 
-## 文件介绍
-
-### python文件
-
-- `main.py` ：主函数
-
-- `preprocess.py ` ：
-  - 数据预处理 (DataProcess)
-  - 关联规则学习 (RuleLearing)
-  - 辅助不变式筛选(SlctInv)
-- `analyser.py` : 
-  - 分析协议
-    - 收集原子公式（collect_atoms）
-    - 抽象与加强（refine_abstract）
-
-### 协议文件夹
-
-- 每个协议放在协议同名的文件夹下，如mutualEX协议（`mutualEX.m`）放置在mutualEX文件夹内
-- 每个协议的文件夹内默认有一个`atom.txt` 文件，用于存放原子公式
-- 如果没有提供原子公式，则自动将可达集中出现的赋值（如 `n[NODE_1].state = C`）及其取反（如 `n[NODE_1].state ！= C`）作为原子公式集
-- **注意**：原子公式的形式需与协议生成的可达集对应，即当可达集采取对称规约时，原子公式的形式也应形如`n[NODE_1].state = C` (以`NODE_1`等符号作为下标)；当可达集未采取对称规约时，则原子公式形如`n[1].state = C` (以`1`等实数作为下标)
-
-### murphi路径
-
-文件`murphi_url.txt`用于存放murphi路径，比如`../../Documents/Lab/cmurphi5.4.9.1/`
-
 
 
 ## 使用方式
@@ -98,7 +72,16 @@
 
 这个方法可以在linux/Mac OS上运行，windows用户参见下面【完整过程】
 
-直接运行 `run.sh` 
+（确保 `murphi_url.txt` 中填写正确）
+
+
+
+```shell
+pip install -r requirements.txt
+./run.sh
+```
+
+
 
 ### 完整过程
 
@@ -190,7 +173,31 @@ python3 decide_formula.py
 - 表达式中的符号需与协议计算出的可达集符号一致，即，当表达式中以实数作为下标，则协议文件夹中的协议也必须对应为<u>非对称规约</u>的形式；当表达式中以符号作为下标，则协议文件夹中的协议也必须对应为<u>对称规约</u>的形式
 - 当对协议进行过修改之后，需手动删除协议文件夹中的 `协议名.txt` 及`协议名.csv`文件，以保证协议与可达集的对应关系
 
+## 文件介绍
 
+### python文件
+
+- `main.py` ：主函数
+
+- `preprocess.py ` ：
+  - 数据预处理 (DataProcess)
+  - 关联规则学习 (RuleLearing)
+  - 辅助不变式筛选(SlctInv)
+- `analyser.py` : 
+  - 分析协议
+    - 收集原子公式（collect_atoms）
+    - 抽象与加强（refine_abstract）
+
+### 协议文件夹
+
+- 每个协议放在协议同名的文件夹下，如mutualEX协议（`mutualEX.m`）放置在mutualEX文件夹内
+- 每个协议的文件夹内默认有一个`atom.txt` 文件，用于存放原子公式
+- 如果没有提供原子公式，则自动将可达集中出现的赋值（如 `n[NODE_1].state = C`）及其取反（如 `n[NODE_1].state ！= C`）作为原子公式集
+- **注意**：原子公式的形式需与协议生成的可达集对应，即当可达集采取对称规约时，原子公式的形式也应形如`n[NODE_1].state = C` (以`NODE_1`等符号作为下标)；当可达集未采取对称规约时，则原子公式形如`n[1].state = C` (以`1`等实数作为下标)
+
+### murphi路径
+
+文件`murphi_url.txt`用于存放murphi路径，比如`../../Documents/Lab/cmurphi5.4.9.1/`
 
 ## 主函数框架
 
