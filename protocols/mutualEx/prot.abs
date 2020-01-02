@@ -1,0 +1,23 @@
+
+********************
+rule Try:
+rule used for replace: []
+NoAbstractRule
+********************
+rule Crit:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_1,rule_6,rule_38,rule_40,rule_12,rule_16,rule_19,rule_27,rule_30]
+********************
+rule Exit:
+rule used for replace: []
+NoAbstractRule
+********************
+rule Idle:
+rule used for replace: []
+abstract node: [i],
+aux_invs: 
+[rule_9,rule_3,rule_39]
+
+output file in "./protocols/mutualEx/ABS_mutualEx.m"
