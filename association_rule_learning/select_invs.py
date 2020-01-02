@@ -63,7 +63,6 @@ class SlctInv(object):
         return open('murphi_url.txt').read().strip()
 
     def translate_test_inv(self, test_rule_string_dict):
-        # test_invs is empty
         if not test_rule_string_dict: return []
 
         translate_dic = {}
