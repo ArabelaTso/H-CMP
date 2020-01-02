@@ -3,6 +3,7 @@ import os
 import sys
 import multiprocessing
 from shutil import copyfile
+from preprocess_opts.utils import transform
 
 from murphi_analysis.call_murphi import run_murphi
 
@@ -49,7 +50,7 @@ class SlctInv(object):
 
         spurious_index = list(set(k for key in spurious_index for k in key))
         self.counterex_index = spurious_index
-            # print(self.counterex_index)
+        # print(self.counterex_index)
         # except:
         #     print('[ERROR!!!] Run Murphi failed!')
         #     sys.exit(1)
@@ -67,8 +68,9 @@ class SlctInv(object):
 
         translate_dic = {}
         for key, rule in test_rule_string_dict.items():
-            translate_dic.update(
-                {key: '\n\nInvariant \"%s\"\n' % key + self.to_murphi(rule)})
+            translate_dic.update({key: self.to_murphi(key, rule)})
+            # translate_dic.update(
+            #     {key: '\n\nInvariant \"{}\"\n{}'.format(key, self.to_murphi(key, rule))})
         return translate_dic
 
     def parallel(self, index_range, id, translate_dic, original_file, keep_file, aux_para=""):
@@ -106,7 +108,7 @@ class SlctInv(object):
         print(counters)
         return counters
 
-    def to_murphi(self, rule):
+    def to_murphi_old(self, inv_name, rule):
         """
         translate an association rule('Chan2[__P1__].Cmd = Inv -> Cache[__P2__].Data = AuxData') into murphi code
         invariant "rule_1"
@@ -123,6 +125,7 @@ class SlctInv(object):
             find_result = re.findall(r'%s\_\d' % t, rule)
             for result in find_result:
                 cur_paras_dict.update({result: t})
+        print("cur_paras_dict", cur_paras_dict)
 
         murphi_string = 'forall ' if cur_paras_dict else ''
 
@@ -143,6 +146,52 @@ class SlctInv(object):
         murphi_string += unequal_string  # ('\n\t%s' % unequal_string + '\n\t->\n\t') if unequal_string else ''
         murphi_string += ("({})".format(rule))
         murphi_string += '\nend;\n' if cur_paras_dict else ';\n'
+
+        return murphi_string
+
+    def to_murphi(self, inv_name, rule):
+        """
+        translate an association rule('Chan2[NODE_1].Cmd = Inv -> Cache[NODE_2].Data = AuxData') into murphi code
+        invariant "rule_1"
+            forall i: NODE do forall j: NODE do
+            (i != j) -> (Chan2[i].Cmd = Inv -> Cache[j].Data = AuxData)
+        end end;
+
+        :param rule: an association rule
+        :param par: NODE
+        :return: murphi code
+        """
+
+
+
+        cur_paras_dict = {}
+        for t in self.all_types:
+            find_result = re.findall(r'{}\_\d'.format(t), rule)
+            for result in find_result:
+                cur_paras_dict.update({transform(result): t})
+                rule = re.sub(r'{}\_\d'.format(t), transform(result), rule)
+
+        murphi_string = '\n\nruleset ' if cur_paras_dict else ''
+
+        unequal_list, para_list = [], []
+        for p, t in cur_paras_dict.items():
+            para_list.append('{} : {} '.format(p, t))
+            if self.home: unequal_list.append('Home != {}'.format(p))
+        murphi_string += ('; '.join(para_list) + 'do\n') if cur_paras_dict else ''
+
+        index = 1
+        cur_para_list = list(cur_paras_dict.keys())
+        while index < len(cur_paras_dict):
+            if cur_paras_dict[cur_para_list[index - 1]] == cur_paras_dict[cur_para_list[index]]:
+                unequal_list.append("{} != {}".format(cur_para_list[index - 1], cur_para_list[index]))
+            index += 1
+
+        murphi_string += "invariant \"{}\"\n\t".format(inv_name)
+        unequal_string = '\t(' + ' & '.join(unequal_list) + ') ->\t' if unequal_list else ''
+        murphi_string += unequal_string  # ('\n\t%s' % unequal_string + '\n\t->\n\t') if unequal_string else ''
+        murphi_string += ("({});".format(rule))
+
+        murphi_string += '\nendruleset;\n' if cur_paras_dict else ';\n'
 
         return murphi_string
 

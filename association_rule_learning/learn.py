@@ -2,6 +2,7 @@ import re
 import os
 import sys
 import time
+import joblib
 import getopt
 import collections
 
@@ -94,10 +95,10 @@ class RuleLearing(object):
     def instantiate(self, rule_tuple, rule_string_list, all_types):
         print('Instantiating rules...')
         fout = '{}/{}/aux_invs.txt'.format(self.data_dir, self.protocol_name)
+        ftemp = '{}/{}/data/aux_invs.json'.format(self.data_dir, self.protocol_name)
 
         rule_string_set = set(rule_string_list)
 
-        # print(rule_string_list)
         try:
             for rule_string in rule_string_list:
                 for t in all_types:
@@ -127,7 +128,6 @@ class RuleLearing(object):
                         print('Too many types of parameters!')
         except getopt.GetoptError:
             sys.stderr.write('Cannot instantiation, skip')
-            # sys.exit()
 
         sym_expan_rule_string = list(rule_string_set)
         sym_expan_rule_tuple = list(map(lambda x: split_string_to_tuple(x), sym_expan_rule_string))
@@ -135,9 +135,13 @@ class RuleLearing(object):
         print('Expansion result: before : {}, after: {}'.format(len(rule_tuple), len(sym_expan_rule_tuple)))
 
         with open(fout, 'w') as f:
-            for cnt, stmt in enumerate(sorted(sym_expan_rule_string, key=lambda x: len(x)), 1):
+            # for cnt, stmt in enumerate(sorted(sym_expan_rule_string, key=lambda x: len(x)), 1):
+            for cnt, stmt in enumerate(sym_expan_rule_string, 1):
                 f.write('rule_%d: %s\n' % (cnt, stmt))
 
+        joblib.dump(sym_expan_rule_tuple, ftemp)
+
+        print(type(sym_expan_rule_tuple))
         return sym_expan_rule_tuple, sym_expan_rule_string
 
     def minimize_rule(self, rest_rule_tuple):
