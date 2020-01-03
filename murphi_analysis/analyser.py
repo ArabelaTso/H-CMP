@@ -3,6 +3,7 @@ import sys
 import copy
 import getopt
 from preprocess_opts.utils import transform
+from association_rule_learning.select_invs import SlctInv
 
 from shutil import copyfile
 import collections
@@ -366,6 +367,7 @@ class Ruleset(object):
         self.atoms = set()
         self.print_info = ""
         self.used_inv_string_set = set()
+        self.dict_used_inv = {}
 
     def collect_atoms_from_ruleset(self):
         pattern = re.compile(r'ruleset(.*?)do(.*?)endruleset\s*;', re.S)
@@ -385,7 +387,7 @@ class Ruleset(object):
         self.atoms |= guard_obj.collect_atoms()
         print('collect atoms from %s' % rule_name)
 
-    def sparse_rulesets(self, aux_invs, abs_type, boundary_K, logfile, print_usedinvs_to_file=False):
+    def sparse_rulesets(self, aux_invs, abs_type, boundary_K, logfile, home_flag, print_usedinvs_to_file=False):
         pattern = re.compile(r'ruleset(.*?)do(.*?)endruleset\s*;', re.S)
         rulesets = pattern.findall(self.text)
 
@@ -407,14 +409,16 @@ class Ruleset(object):
                 refiner = Reiner(rulename, guards_obj, aux_invs)
                 useful_invs, useful_invs_index = refiner.find_useful_invs(boundary_K=boundary_K)
                 dict_inv2index = refiner.dict_inv2index
+                # dict_index2inv = {'rule_{}'.format(index): ' & '.join(inv[0]) + ' -> ' + inv[1] for index, inv in refiner.dict_index2inv.items()}
                 # print("dict_inv2index = {}".format(dict_inv2index))
 
                 # open(logfile, 'a').write(
                 #     'aux_invs used for refine:[{}],\n'.format(','.join(map(lambda x: 'rule_{}'.format(x), useful_invs_index))))
 
                 # abstract
-                abstracter = Abstractor(rulename, guards_obj, actions_obj, abs_type, useful_invs, self.type, logfile,
-                                        dict_inv2index)
+
+                abstracter = Abstractor(rulename, guards_obj, actions_obj, abs_type, useful_invs, self.type, home_flag,
+                                        logfile, dict_inv2index)
                 abstracter.abstract()
                 abstracter.used_inv_string_list = list(set(abstracter.used_inv_string_list))
 
@@ -507,11 +511,13 @@ class Reiner(object):
 
 
 class Abstractor(object):
-    def __init__(self, rulename, guard_obj, action_obj, abs_type, aux_invs, all_types, logfile, dict_inv2index):
+    def __init__(self, rulename, guard_obj, action_obj, abs_type, aux_invs, all_types, home_flag, logfile,
+                 dict_inv2index):
         self.rulename = rulename
         self.guard_obj = guard_obj
         self.action_obj = action_obj
         self.abs_type = abs_type
+        self.home = home_flag
         self.aux_invs = aux_invs
         self.all_types = all_types
         self.print_string = ""
@@ -663,13 +669,26 @@ class Abstractor(object):
             # open(self.logfile, 'a').write('\naux_invs: \n[{}]'.format(
             #     ',\n'.join(map(lambda x: 'rule_{}: {}'.format(self.dict_inv2index[x], x),
             #                  self.used_inv_string_list))))
-            open(self.logfile, 'a').write(
-                '[{}],{},'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
+            # open(self.logfile, 'a').write(
+            #     '[{}],{},'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
+            #
+            # open(self.logfile, 'a').write('\n[{}],'.format(
+            #     ','.join(map(lambda x: 'rule_{}'.format(self.dict_inv2index[x]),
+            #                  self.used_inv_string_list))))
+            # open(self.logfile, 'a').write('[{}]'.format(','.join(map(lambda x: 'rule_{}'.format(x), rep_index))))
 
-            open(self.logfile, 'a').write('\n[{}],'.format(
-                ','.join(map(lambda x: 'n_rule_{}'.format(self.dict_inv2index[x]),
-                             self.used_inv_string_list))))
-            open(self.logfile, 'a').write('[{}]'.format(','.join(map(lambda x: 'n_rule_{}'.format(x), rep_index))))
+            with open(self.logfile, 'a') as f:
+                f.write(
+                    '[{}],{},'.format(','.join(map(lambda x: transform(x), abs_para_list)), abs_rule_name))
+
+                f.write('\n[{}],'.format(
+                    ','.join(map(lambda x: 'rule_{}'.format(self.dict_inv2index[x]),
+                                 self.used_inv_string_list))))
+                f.write('[{}]'.format(','.join(map(lambda x: 'rule_{}'.format(x), rep_index))))
+
+                selector = SlctInv("", "", [], self.all_types, self.home)
+                for inv in self.used_inv_string_list:
+                    f.write('\n{}'.format(selector.to_murphi('rule_{}'.format(self.dict_inv2index[inv]), inv)))
 
     def abstract_2_para(self):
         abs_para = [self.abs_type + '_1']
@@ -761,8 +780,8 @@ class Abstractor(object):
                 cur_para_dict.pop(para)
 
         if len(cur_para_dict) >= 1:
-            print_string = print_string + '\n\tforall %s do\n\t\t' % '; '.join(
-                ('{} : {}'.format(k, v) for k, v in cur_para_dict.items()))
+            print_string = print_string + '\n\tforall {} do\n\t\t'.format('; '.join(
+                ('{} : {}'.format(k, v) for k, v in cur_para_dict.items())))
 
         print_string = print_string + ' &\n\t\t'.join(abs_inv)
         if len(cur_para_dict) >= 1:
@@ -908,10 +927,11 @@ def analyzeParams(params):
 
 
 class Protocol(object):
-    def __init__(self, data_dir, protocol_name, file_url):
+    def __init__(self, data_dir, protocol_name, file_url, home):
         self.data_dir = data_dir
         self.protocol_name = protocol_name
         self.file_url = file_url
+        self.home = home
         self.logfile = '{}/{}/prot.abs'.format(self.data_dir, self.protocol_name)
 
     def read_file(self):
@@ -937,5 +957,5 @@ class Protocol(object):
         text = self.read_file()
         typedf = TypeDef(text)
         ruleset = Ruleset(self.data_dir, self.protocol_name, text, typedf.type.keys())
-        ruleset.sparse_rulesets(aux_invs, abs_type, boundary_K, self.logfile, print_usedinvs_to_file)
+        ruleset.sparse_rulesets(aux_invs, abs_type, boundary_K, self.logfile, self.home, print_usedinvs_to_file)
         return ruleset.print_info, list(ruleset.used_inv_string_set)

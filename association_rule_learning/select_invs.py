@@ -4,7 +4,6 @@ import sys
 import multiprocessing
 from shutil import copyfile
 from preprocess_opts.utils import transform
-
 from murphi_analysis.call_murphi import run_murphi
 
 
@@ -27,7 +26,9 @@ class SlctInv(object):
         print('\nchecking invariants...')
         original_file = "{0}/{1}/{1}.m".format(self.data_dir, self.name) if original_file is None else original_file
 
-        test_rule_string_dict = {'rule_%d' % i: rule for i, rule in enumerate(test_rule_string, 1)}
+        test_rule_string_dict = {'rule_%d' % i: rule for i, rule in
+                                 enumerate(test_rule_string, 1)}
+
         translate_dic = self.translate_test_inv(test_rule_string_dict)
 
         n = len(test_rule_string)
@@ -162,8 +163,6 @@ class SlctInv(object):
         :return: murphi code
         """
 
-
-
         cur_paras_dict = {}
         for t in self.all_types:
             find_result = re.findall(r'{}\_\d'.format(t), rule)
@@ -176,7 +175,8 @@ class SlctInv(object):
         unequal_list, para_list = [], []
         for p, t in cur_paras_dict.items():
             para_list.append('{} : {} '.format(p, t))
-            if self.home: unequal_list.append('Home != {}'.format(p))
+            if self.home:
+                unequal_list.append('Home != {}'.format(p))
         murphi_string += ('; '.join(para_list) + 'do\n') if cur_paras_dict else ''
 
         index = 1
@@ -186,7 +186,7 @@ class SlctInv(object):
                 unequal_list.append("{} != {}".format(cur_para_list[index - 1], cur_para_list[index]))
             index += 1
 
-        murphi_string += "invariant \"{}\"\n\t".format(inv_name)
+        murphi_string += "Invariant \"{}\"\n\t".format(inv_name)
         unequal_string = '\t(' + ' & '.join(unequal_list) + ') ->\t' if unequal_list else ''
         murphi_string += unequal_string  # ('\n\t%s' % unequal_string + '\n\t->\n\t') if unequal_string else ''
         murphi_string += ("({});".format(rule))
@@ -199,6 +199,7 @@ class SlctInv(object):
                     keep_file=False):
         original_file = "{0}/{0}.m".format(self.name) if original_file is None else original_file
         print('checking %s' % original_file)
+
         spurious_cnt, counterex_index = self.select_invariant(test_rule_string, keep_file=keep_file, num_core=num_core,
                                                               original_file=original_file, aux_para=aux_para)
         print('counterex_index', counterex_index)

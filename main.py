@@ -55,7 +55,7 @@ def select(data_dir, protocol_name, abs_type, home_flag, num_core, rule_tuple, r
     print('type of aux_inv = {}'.format(type(instan_rule_tuple)))
 
     _, candidate_inv_string = prot_analyzer.refine_abstract(instan_rule_tuple, abs_type=abs_type,
-                                                            print_usedinvs_to_file=False, boundary_K=1)
+                                                               print_usedinvs_to_file=False, boundary_K=1)
     candidate_inv_string = list(set(candidate_inv_string))
     candidate_inv_tuple = list(map(lambda x: split_string_to_tuple(x), candidate_inv_string))
     assert len(candidate_inv_string) == len(candidate_inv_tuple)
@@ -93,8 +93,8 @@ def cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer):
     home_flag = False if args.node_num < 3 else True
 
     print_info, used_inv_string_list = prot_analyzer.refine_abstract(aux_invs, abs_type=args.abs_obj,
-                                                                     print_usedinvs_to_file=True,
-                                                                     boundary_K=args.kmax)
+                                                                                     print_usedinvs_to_file=True,
+                                                                                     boundary_K=args.kmax)
 
     with open(abs_filename, 'a') as fw:
         fw.write(print_info)
@@ -131,8 +131,10 @@ def iter_cmp(data_dir, args, all_types=None, aux_invs=None, abs_filename=None, p
             new_absfile = "{2}/{0}/ABS_{0}_{1}.m".format(args.protocol, cnt, data_dir)
             copyfile(prot_dir, new_absfile)
 
-            print_info, used_inv_string_list = prot_analyzer.refine_abstract(new_inv_tuple, abs_type=args.abs_obj,
-                                                                             print_usedinvs_to_file=True, boundary_K=1)
+            print_info, used_inv_string_list = prot_analyzer.refine_abstract(new_inv_tuple,
+                                                                                             abs_type=args.abs_obj,
+                                                                                             print_usedinvs_to_file=True,
+                                                                                             boundary_K=1)
             with open(new_absfile, 'a') as fw:
                 fw.write(print_info)
             checker = SlctInv(data_dir, args.protocol, [], all_types, home=home_flag)
@@ -150,7 +152,7 @@ def all(data_dir, args, murphi_url, max_cnt=10, end_with='all', abs_filename=Non
     home_flag = False if args.node_num < 3 else True
     print('{}\nPreprocessing'.format('*' * 30))
 
-    prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol))
+    prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol), home_flag)
     all_types = prot_analyzer.collect_atoms()
 
     if recalculate:
@@ -164,7 +166,7 @@ def all(data_dir, args, murphi_url, max_cnt=10, end_with='all', abs_filename=Non
             return
 
         print('{}\nSelecting'.format('*' * 30))
-        prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol))
+        prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol), home_flag)
         aux_invs, _ = select(data_dir, args.protocol, args.abs_obj, home_flag, 1, rule_tuple,
                              rule_string_list, prot_analyzer, all_types)
     else:
@@ -177,7 +179,7 @@ def all(data_dir, args, murphi_url, max_cnt=10, end_with='all', abs_filename=Non
             aux_invs = list(map(lambda x: split_string_to_tuple(x), aux_invs))
         print(aux_invs[:2])
 
-    prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol))
+    prot_analyzer = Protocol(data_dir, args.protocol, '{0}/{1}/{1}.m'.format(data_dir, args.protocol), home_flag)
     print('{}\nStrenghening and abstracting'.format('*' * 30))
     abs_filename = "{1}/{0}/ABS_{0}.m".format(args.protocol, data_dir) if abs_filename is None else abs_filename
     iter_cmp(data_dir, args, all_types, aux_invs, abs_filename, prot_analyzer, max_cnt=max_cnt)
