@@ -1,0 +1,144 @@
+
+
+n_Try:
+[i], NoAbstractRule
+
+n_Crit:
+[i],n_ABS_Crit_NODE_1,
+[rule_32,rule_2,rule_35,rule_5,rule_7,rule_8,rule_11,rule_43,rule_21,rule_27,rule_29],[]
+
+
+ruleset j : NODE do
+Invariant "rule_32"
+	(x = true -> n[j].st != C);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_2"
+		(i != j) ->	(x = true & n[i].st = T -> n[i].data = auxDATA);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_35"
+		(i != j) ->	(x = true & n[i].st = T -> n[i].st = T);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_5"
+		(i != j) ->	(x = true & n[i].st = T -> n[i].st != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_7"
+		(i != j) ->	(x = true & n[i].st = T -> n[i].st != C);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_8"
+		(i != j) ->	(n[i].st = T -> n[i].st != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_11"
+		(i != j) ->	(x = true & n[i].st = T -> n[i].st != I);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_43"
+	(x = true -> n[j].st != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_21"
+		(i != j) ->	(n[i].st = T -> n[i].st != I);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_27"
+		(i != j) ->	(n[i].st = T -> n[i].st != C);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_29"
+		(i != j) ->	(n[i].st = T -> n[i].data = auxDATA);
+endruleset;
+
+
+n_Exit:
+[i], NoAbstractRule
+
+n_Idle:
+[i],n_ABS_Idle_NODE_1,
+[rule_40,rule_13,rule_6,rule_14],[rule_40]
+
+
+ruleset i : NODE do
+Invariant "rule_40"
+	(n[i].st = E -> n[i].data = auxDATA);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_13"
+		(i != j) ->	(n[i].st = E -> n[i].st != E);
+endruleset;
+
+
+
+ruleset i : NODE do
+Invariant "rule_6"
+	(n[i].st = E -> x = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_14"
+		(i != j) ->	(n[i].st = E -> n[i].st != C);
+endruleset;
+
+
+n_Store:
+[i],n_ABS_Store_NODE_1,
+[rule_41,rule_12,rule_44],[]
+
+
+ruleset i : NODE do
+Invariant "rule_41"
+	(n[i].st = C -> x = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_12"
+		(i != j) ->	(n[i].st = C -> n[i].st != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_44"
+		(i != j) ->	(n[i].st = C -> n[i].st != C);
+endruleset;

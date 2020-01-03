@@ -1,0 +1,837 @@
+
+
+n_RecvGntE1:
+[i], NoAbstractRule
+
+n_RecvGntS2:
+[i], NoAbstractRule
+
+n_SendGntE3:
+[i],n_ABS_SendGntE3_NODE_1,
+[rule_256,rule_255,rule_4,rule_383,rule_393,rule_267,rule_396,rule_269,rule_270,rule_143,rule_275,rule_276,rule_23,rule_283,rule_28,rule_159,rule_292,rule_37,rule_41,rule_172,rule_173,rule_174,rule_47,rule_300,rule_51,rule_308,rule_316,rule_65,rule_324,rule_69,rule_197,rule_72,rule_327,rule_329,rule_75,rule_333,rule_214,rule_247,rule_349,rule_351,rule_229,rule_104,rule_107,rule_238,rule_367,rule_241,rule_248,rule_252,rule_127],[]
+Invariant "rule_256"
+	(ExGntd = false -> MemData = AuxData);;
+
+
+
+ruleset j : NODE do
+Invariant "rule_255"
+	(ShrSet[j] = false & CurCmd = ReqE -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_4"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Chan2[i].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_383"
+	(ShrSet[j] = false & CurCmd = ReqE -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_393"
+	(ShrSet[j] = false & ExGntd = false -> Chan3[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_267"
+	(ExGntd = false -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_396"
+	(ShrSet[j] = false & CurCmd = ReqE -> Chan2[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_269"
+	(ExGntd = false & CurCmd = ReqE -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_270"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> InvSet[i] = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_143"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_275"
+	(ShrSet[j] = false & ExGntd = false -> InvSet[j] = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_276"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Chan3[i].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_23"
+	(ShrSet[j] = false & CurCmd = ReqE -> Chan2[j].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_283"
+	(ExGntd = false -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_28"
+	(ExGntd = false & CurCmd = ReqE -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_159"
+	(ShrSet[j] = false & ExGntd = false -> Chan3[j].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_292"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_37"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Chan3[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_41"
+	(ShrSet[j] = false -> Chan2[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_172"
+	(ShrSet[j] = false & ExGntd = false -> Chan2[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_173"
+	(ShrSet[j] = false -> Chan2[j].Cmd != Inv);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_174"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Chan2[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_47"
+	(ShrSet[j] = false & CurCmd = ReqE -> Cache[j].State = I);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_300"
+	(ShrSet[j] = false & CurCmd = ReqE -> Cache[j].State != S);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_51"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Cache[i].State != S);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_308"
+	(ShrSet[j] = false & ExGntd = false -> Chan2[j].Cmd != GntS);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_316"
+	(ShrSet[j] = false -> Cache[j].State != S);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_65"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ExGntd = false -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_324"
+	(ShrSet[j] = false & ExGntd = false -> Chan2[j].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_69"
+	(ShrSet[j] = false & CurCmd = ReqE -> Chan2[j].Cmd != GntS);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_197"
+	(ShrSet[j] = false -> Cache[j].State = I);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_72"
+	(ShrSet[j] = false & ExGntd = false -> MemData = AuxData);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_327"
+	(ShrSet[j] = false -> InvSet[j] = false);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_329"
+	(ShrSet[j] = false -> Chan3[j].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_75"
+	(ShrSet[j] = false -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_333"
+	(ShrSet[j] = false -> Chan2[j].Cmd != GntS);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_214"
+	(ShrSet[j] = false & CurCmd = ReqE -> Chan3[j].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE do
+Invariant "rule_247"
+	(Chan2[i].Cmd = Empty & ExGntd = false -> MemData = AuxData);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_349"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Chan2[i].Cmd != GntS);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_351"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ExGntd = false -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_229"
+	(ShrSet[j] = false & ExGntd = false -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_104"
+	(ShrSet[j] = false -> Chan3[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_107"
+	(ShrSet[j] = false & CurCmd = ReqE -> Chan3[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_238"
+	(ShrSet[j] = false & ExGntd = false -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_367"
+	(ShrSet[j] = false & ExGntd = false -> Cache[j].State = I);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_241"
+	(ShrSet[j] = false -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_248"
+	(ShrSet[j] = false & ExGntd = false -> Cache[j].State != S);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_252"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ShrSet[i] = false -> Cache[i].State = I);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_127"
+	(ShrSet[j] = false & CurCmd = ReqE -> InvSet[j] = false);
+endruleset;
+
+
+n_SendGntS4:
+[i],n_ABS_SendGntS4_NODE_1,
+[rule_256,rule_65,rule_360,rule_10,rule_267,rule_14,rule_283,rule_21,rule_312,rule_247,rule_351],[]
+Invariant "rule_256"
+	(ExGntd = false -> MemData = AuxData);;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_65"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ExGntd = false -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_360"
+	(CurCmd = ReqS & ExGntd = false -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_10"
+	(CurCmd = ReqS & ExGntd = false -> Chan2[j].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_267"
+	(ExGntd = false -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_14"
+	(CurCmd = ReqS & ExGntd = false -> Chan3[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_283"
+	(ExGntd = false -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_21"
+	(CurCmd = ReqS & ExGntd = false -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_312"
+	(CurCmd = ReqS & ExGntd = false -> Chan3[j].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE do
+Invariant "rule_247"
+	(Chan2[i].Cmd = Empty & ExGntd = false -> MemData = AuxData);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_351"
+		(i != j) ->	(Chan2[i].Cmd = Empty & ExGntd = false -> Cache[i].State != E);
+endruleset;
+
+
+n_RecvInvAck5:
+[i],n_ABS_RecvInvAck5_NODE_1,
+[rule_245,rule_1,rule_389,rule_135,rule_266,rule_399,rule_280,rule_304,rule_50,rule_180,rule_187,rule_201,rule_330,rule_77,rule_217,rule_224,rule_102,rule_236,rule_239,rule_368],[rule_245]
+
+
+ruleset i : NODE do
+Invariant "rule_245"
+	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan3[i].Data = AuxData);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_1"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> ShrSet[i] = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_389"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan2[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_135"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & CurCmd != Empty -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_266"
+	(ExGntd = true -> Chan2[j].Cmd != GntS);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_399"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan2[i].Cmd != GntS);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_280"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Cache[i].State = I);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_304"
+		(i != j) ->	(Chan3[i].Cmd = InvAck -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_50"
+		(i != j) ->	(Chan3[i].Cmd = InvAck -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_180"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan3[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_187"
+	(ExGntd = true & CurCmd != Empty -> Cache[j].State != S);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_201"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & CurCmd != Empty -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_330"
+	(ExGntd = true & CurCmd != Empty -> Chan2[j].Cmd != GntS);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_77"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan3[i].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_217"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_224"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan2[i].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_102"
+	(ExGntd = true -> Cache[j].State != S);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_236"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> InvSet[i] = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_239"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Cache[i].State != S);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_368"
+		(i != j) ->	(Chan3[i].Cmd = InvAck & ExGntd = true -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+n_RecvInvAck6:
+[i], NoAbstractRule
+
+n_SendInvAck7:
+[i], NoAbstractRule
+
+n_SendInvAck8:
+[i], NoAbstractRule
+
+n_SendInv9:
+[i], NoAbstractRule
+
+n_SendInv10:
+[i], NoAbstractRule
+
+n_RecvReqE11:
+[i],n_ABS_RecvReqE11_NODE_1,
+[rule_384,rule_287,rule_262,rule_263,rule_392,rule_78,rule_178,rule_19,rule_179,rule_306],[]
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_384"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqE -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_287"
+	(CurCmd = Empty -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_262"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqE -> Chan3[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_263"
+	(CurCmd = Empty -> Chan2[j].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_392"
+	(CurCmd = Empty -> Chan3[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_78"
+	(CurCmd = Empty -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_178"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqE -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_19"
+	(CurCmd = Empty -> Chan3[j].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_179"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqE -> Chan3[i].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_306"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqE -> Chan2[i].Cmd != Inv);
+endruleset;
+
+
+n_RecvReqS12:
+[i],n_ABS_RecvReqS12_NODE_1,
+[rule_131,rule_68,rule_287,rule_263,rule_392,rule_78,rule_15,rule_19,rule_371,rule_117],[]
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_131"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqS -> Chan3[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_68"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqS -> Chan3[i].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_287"
+	(CurCmd = Empty -> Chan2[j].Cmd != GntE);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_263"
+	(CurCmd = Empty -> Chan2[j].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_392"
+	(CurCmd = Empty -> Chan3[j].Cmd = Empty);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_78"
+	(CurCmd = Empty -> Cache[j].State != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_15"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqS -> Chan2[i].Cmd != Inv);
+endruleset;
+
+
+
+ruleset j : NODE do
+Invariant "rule_19"
+	(CurCmd = Empty -> Chan3[j].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_371"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqS -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_117"
+		(i != j) ->	(CurCmd = Empty & Chan1[i].Cmd = ReqS -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+n_SendReqE13:
+[i], NoAbstractRule
+
+n_SendReqE14:
+[i], NoAbstractRule
+
+n_SendReqS15:
+[i], NoAbstractRule
+
+n_Store16:
+[i],n_ABS_Store16_NODE_1,
+[rule_257,rule_261,rule_142,rule_29,rule_186,rule_321,rule_326,rule_216,rule_346,rule_230,rule_235,rule_373,rule_123],[]
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_257"
+		(i != j) ->	(Cache[i].State = E -> Cache[i].State = I);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_261"
+		(i != j) ->	(Cache[i].State = E -> Chan3[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_142"
+		(i != j) ->	(Cache[i].State = E -> InvSet[i] = false);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_29"
+		(i != j) ->	(Cache[i].State = E -> Chan2[i].Cmd = Empty);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_186"
+		(i != j) ->	(Cache[i].State = E -> Cache[i].State != E);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_321"
+		(i != j) ->	(Cache[i].State = E -> Chan3[i].Cmd != InvAck);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_326"
+		(i != j) ->	(Cache[i].State = E -> Chan2[i].Cmd != Inv);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_216"
+		(i != j) ->	(Cache[i].State = E -> Chan2[i].Cmd != GntS);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_346"
+		(i != j) ->	(Cache[i].State = E -> Cache[i].State != S);
+endruleset;
+
+
+
+ruleset i : NODE do
+Invariant "rule_230"
+	(Cache[i].State = E -> ExGntd = true);
+endruleset;
+
+
+
+ruleset i : NODE do
+Invariant "rule_235"
+	(Cache[i].State = E -> CurCmd != Empty);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_373"
+		(i != j) ->	(Cache[i].State = E -> Chan2[i].Cmd != GntE);
+endruleset;
+
+
+
+ruleset i : NODE ; j : NODE do
+Invariant "rule_123"
+		(i != j) ->	(Cache[i].State = E -> ShrSet[i] = false);
+endruleset;
